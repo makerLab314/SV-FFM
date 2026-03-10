@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '/SV-FFM/',
   root: '.',
   publicDir: 'public',
   build: {
