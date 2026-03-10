@@ -20,12 +20,12 @@ export function initScene() {
   camera.position.set(0, 0, 30);
 
   // Lights
-  scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-  const pointLight = new THREE.PointLight(0x6c63ff, 2, 100);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.15));
+  const pointLight = new THREE.PointLight(0xffffff, 1.5, 100);
   pointLight.position.set(10, 10, 20);
   scene.add(pointLight);
 
-  const pointLight2 = new THREE.PointLight(0xa29bfe, 1.5, 100);
+  const pointLight2 = new THREE.PointLight(0x888888, 1.0, 100);
   pointLight2.position.set(-10, -5, 15);
   scene.add(pointLight2);
 
@@ -40,17 +40,17 @@ export function initScene() {
   ];
 
   const material = new THREE.MeshStandardMaterial({
-    color: 0x6c63ff,
-    metalness: 0.5,
-    roughness: 0.3,
+    color: 0x333333,
+    metalness: 0.7,
+    roughness: 0.2,
     wireframe: false,
   });
 
   const wireframeMaterial = new THREE.MeshStandardMaterial({
-    color: 0xa29bfe,
+    color: 0x555555,
     wireframe: true,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.25,
   });
 
   for (let i = 0; i < 18; i++) {
@@ -58,7 +58,10 @@ export function initScene() {
     const mat = i % 3 === 0 ? wireframeMaterial.clone() : material.clone();
 
     if (i % 3 !== 0) {
-      mat.color = new THREE.Color().setHSL(0.7 + Math.random() * 0.1, 0.6, 0.55);
+      const HUE_RANGE = 0.02;
+      const LIGHTNESS_BASE = 0.18;
+      const LIGHTNESS_RANGE = 0.15;
+      mat.color = new THREE.Color().setHSL(Math.random() * HUE_RANGE, 0.0, LIGHTNESS_BASE + Math.random() * LIGHTNESS_RANGE);
     }
 
     const mesh = new THREE.Mesh(geo, mat);
