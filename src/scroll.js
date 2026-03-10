@@ -1,5 +1,6 @@
 /* ========================================
    Scroll Animations (GSAP + ScrollTrigger)
+   Skeuomorphic 3D fold/roll + parallax
    ======================================== */
 
 import gsap from 'gsap';
@@ -53,7 +54,44 @@ export function initScrollAnimations() {
     );
   }
 
-  // --- Generic scroll-reveal for cards / sections ---
+  // --- 3D Fold/Roll effect: sections fold upward as they scroll out ---
+  gsap.utils.toArray('.section').forEach((section) => {
+    ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: 'bottom top',
+      scrub: true,
+      onUpdate: (self) => {
+        const progress = self.progress;
+        const rotateX = progress * 8;
+        const translateZ = progress * -120;
+        const opacity = 1 - progress * 0.6;
+        section.style.transform =
+          `rotateX(${rotateX}deg) translateZ(${translateZ}px)`;
+        section.style.opacity = opacity;
+      },
+      onLeaveBack: () => {
+        section.style.transform = 'rotateX(0deg) translateZ(0px)';
+        section.style.opacity = 1;
+      },
+    });
+  });
+
+  // --- Parallax depth on section inner content ---
+  gsap.utils.toArray('.section-inner').forEach((inner) => {
+    gsap.to(inner, {
+      scrollTrigger: {
+        trigger: inner,
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 1,
+      },
+      y: -40,
+      ease: 'none',
+    });
+  });
+
+  // --- About cards scroll-reveal with 3D ---
   gsap.utils.toArray('.about-card').forEach((card, i) => {
     gsap.to(card, {
       scrollTrigger: {
@@ -63,12 +101,16 @@ export function initScrollAnimations() {
       },
       opacity: 1,
       y: 0,
-      duration: 0.7,
-      delay: i * 0.12,
-      ease: 'power2.out',
+      rotateX: 0,
+      duration: 0.8,
+      delay: i * 0.15,
+      ease: 'power3.out',
     });
+    // Set initial 3D tilt
+    gsap.set(card, { rotateX: 12, transformPerspective: 800 });
   });
 
+  // --- Team members scroll-reveal ---
   gsap.utils.toArray('.team-member').forEach((member, i) => {
     gsap.to(member, {
       scrollTrigger: {
@@ -78,12 +120,15 @@ export function initScrollAnimations() {
       },
       opacity: 1,
       y: 0,
+      scale: 1,
       duration: 0.7,
       delay: i * 0.1,
-      ease: 'power2.out',
+      ease: 'back.out(1.4)',
     });
+    gsap.set(member, { scale: 0.9 });
   });
 
+  // --- Project items scroll-reveal with slide ---
   gsap.utils.toArray('.project-item').forEach((item, i) => {
     gsap.to(item, {
       scrollTrigger: {
@@ -93,10 +138,12 @@ export function initScrollAnimations() {
       },
       opacity: 1,
       x: 0,
+      rotateY: 0,
       duration: 0.7,
       delay: i * 0.1,
       ease: 'power2.out',
     });
+    gsap.set(item, { rotateY: -5, transformPerspective: 600 });
   });
 
   // --- Contact section ---
@@ -110,9 +157,11 @@ export function initScrollAnimations() {
       },
       opacity: 1,
       y: 0,
+      scale: 1,
       duration: 0.8,
       ease: 'power2.out',
     });
+    gsap.set(contactContent, { scale: 0.95 });
   }
 
   // --- Section titles ---

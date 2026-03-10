@@ -31,11 +31,11 @@ export function initLogo3D() {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   scene.add(ambientLight);
 
-  const dirLight = new THREE.DirectionalLight(0x6c63ff, 1.2);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
   dirLight.position.set(2, 3, 4);
   scene.add(dirLight);
 
-  const backLight = new THREE.DirectionalLight(0xa29bfe, 0.5);
+  const backLight = new THREE.DirectionalLight(0x888888, 0.5);
   backLight.position.set(-2, -1, -2);
   scene.add(backLight);
 
@@ -55,9 +55,9 @@ export function initLogo3D() {
     const scale = 2.2 / maxDim;
 
     const material = new THREE.MeshStandardMaterial({
-      color: 0xa29bfe,
-      metalness: 0.3,
-      roughness: 0.4,
+      color: 0xcccccc,
+      metalness: 0.5,
+      roughness: 0.3,
     });
 
     logoMesh = new THREE.Mesh(geometry, material);
