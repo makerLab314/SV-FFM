@@ -1,0 +1,29 @@
+{
+  "name": "sv-ffm",
+  "version": "1.0.0",
+  "description": "Website der Schülervertretung – Freie Waldorfschule Frankfurt",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/makerLab314/SV-FFM.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/makerLab314/SV-FFM/issues"
+  },
+  "homepage": "https://github.com/makerLab314/SV-FFM#readme",
+  "dependencies": {
+    "gsap": "^3.14.2",
+    "three": "^0.183.2"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
+}
