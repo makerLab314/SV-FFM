@@ -1,6 +1,6 @@
 /* ========================================
    Scroll Animations (GSAP + ScrollTrigger)
-   Skeuomorphic 3D fold/roll + parallax
+   Skeuomorphic 3D rolodex fold/unroll + parallax
    ======================================== */
 
 import gsap from 'gsap';
@@ -14,6 +14,11 @@ export function initScrollAnimations() {
   const heroSub = document.querySelector('.hero-subtitle');
   const scrollInd = document.querySelector('.scroll-indicator');
 
+  // Set initial state BEFORE creating the timeline
+  heroLines.forEach((line) => {
+    gsap.set(line, { rotateX: -45, transformPerspective: 800 });
+  });
+
   const heroTl = gsap.timeline({ delay: 0.3 });
 
   heroLines.forEach((line, i) => {
@@ -22,10 +27,11 @@ export function initScrollAnimations() {
       {
         opacity: 1,
         y: 0,
-        duration: 1,
-        ease: 'power3.out',
+        rotateX: 0,
+        duration: 1.1,
+        ease: 'power4.out',
       },
-      i * 0.2
+      i * 0.25
     );
   });
 
@@ -35,10 +41,10 @@ export function initScrollAnimations() {
       {
         opacity: 1,
         y: 0,
-        duration: 0.8,
+        duration: 0.9,
         ease: 'power2.out',
       },
-      0.6
+      0.7
     );
   }
 
@@ -50,145 +56,211 @@ export function initScrollAnimations() {
         duration: 0.6,
         ease: 'power2.out',
       },
-      1.2
+      1.4
     );
   }
 
-  // --- 3D Fold/Roll effect: sections fold upward as they scroll out ---
-  const FOLD_MAX_ROTATION_DEG = 8;
-  const FOLD_MAX_DEPTH_PX = -120;
-  const FOLD_FADE_INTENSITY = 0.6;
+  // --- Rolodex / page-fold effect ─────────────────────────────────────
+  // Each section folds backward & up as it leaves (like a flip-clock or rolodex card)
+  // The next section arrives by unrolling from below
+  const FOLD_EXIT_ROT   = 18;   // degrees rotateX when exiting (fold backward)
+  const FOLD_DEPTH_PX   = -180; // translateZ when folding away
+  const FOLD_FADE       = 0.55;
 
   gsap.utils.toArray('.section').forEach((section) => {
+    // Exit animation: section folds away upward
     ScrollTrigger.create({
       trigger: section,
       start: 'top top',
       end: 'bottom top',
-      scrub: true,
+      scrub: 1.2,
       onUpdate: (self) => {
-        const progress = self.progress;
-        const rotateX = progress * FOLD_MAX_ROTATION_DEG;
-        const translateZ = progress * FOLD_MAX_DEPTH_PX;
-        const opacity = 1 - progress * FOLD_FADE_INTENSITY;
-        section.style.transform =
-          `rotateX(${rotateX}deg) translateZ(${translateZ}px)`;
-        section.style.opacity = opacity;
+        const p = self.progress;
+        // Ease the fold curve: slow start, fast at end
+        const eased = p * p;
+        const rotX    = eased * FOLD_EXIT_ROT;
+        const transZ  = eased * FOLD_DEPTH_PX;
+        const opacity = 1 - p * FOLD_FADE;
+        section.style.transform = `rotateX(${rotX}deg) translateZ(${transZ}px)`;
+        section.style.opacity   = opacity;
       },
       onLeaveBack: () => {
         section.style.transform = 'rotateX(0deg) translateZ(0px)';
-        section.style.opacity = 1;
+        section.style.opacity   = 1;
+      },
+    });
+
+    // Entry animation: section unrolls in from below
+    ScrollTrigger.create({
+      trigger: section,
+      start: 'top 110%',
+      end: 'top top',
+      scrub: 1,
+      onUpdate: (self) => {
+        // Only apply while entering (not exiting)
+        if (self.direction === 1) {
+          const entryProgress = 1 - self.progress; // 1 → 0 as we scroll in
+          const eased = entryProgress * entryProgress;
+          const rotX  = -eased * 12;       // arrive from "below" (negative rotX)
+          section.style.transformOrigin = 'center bottom';
+          section.style.transform = `rotateX(${rotX}deg) translateZ(${-eased * 60}px)`;
+        }
+      },
+      onEnterBack: () => {
+        section.style.transformOrigin = 'center top';
       },
     });
   });
 
-  // --- Parallax depth on section inner content ---
+  // --- Deep parallax on section content ─────────────────────────────
   gsap.utils.toArray('.section-inner').forEach((inner) => {
     gsap.to(inner, {
       scrollTrigger: {
         trigger: inner,
         start: 'top bottom',
         end: 'bottom top',
-        scrub: 1,
+        scrub: 1.5,
       },
-      y: -40,
+      y: -60,
       ease: 'none',
     });
   });
 
-  // --- About cards scroll-reveal with 3D ---
-  const CARD_TILT_DEG = 12;
-  const CARD_PERSPECTIVE_PX = 800;
+  // ── Hero-logo parallax (slower than content) ─────────────────────────
+  const heroLogoBg = document.querySelector('.hero-logo-bg');
+  if (heroLogoBg) {
+    gsap.to(heroLogoBg, {
+      scrollTrigger: {
+        trigger: '#hero',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: 2,
+      },
+      y: -120,
+      scale: 1.15,
+      ease: 'none',
+    });
+  }
 
+  // --- About cards — rolodex flip-in from behind ─────────────────────
   gsap.utils.toArray('.about-card').forEach((card, i) => {
+    // Set initial state: rotated backward (as if on a barrel, facing away)
+    gsap.set(card, {
+      rotateX: 55,
+      transformPerspective: 900,
+      transformOrigin: 'center bottom',
+      opacity: 0,
+      y: 60,
+    });
+
     gsap.to(card, {
       scrollTrigger: {
         trigger: card,
-        start: 'top 85%',
-        toggleActions: 'play none none none',
-      },
-      opacity: 1,
-      y: 0,
-      rotateX: 0,
-      duration: 0.8,
-      delay: i * 0.15,
-      ease: 'power3.out',
-    });
-    gsap.set(card, { rotateX: CARD_TILT_DEG, transformPerspective: CARD_PERSPECTIVE_PX });
-  });
-
-  // --- Team members scroll-reveal ---
-  gsap.utils.toArray('.team-member').forEach((member, i) => {
-    gsap.to(member, {
-      scrollTrigger: {
-        trigger: member,
-        start: 'top 85%',
-        toggleActions: 'play none none none',
-      },
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      duration: 0.7,
-      delay: i * 0.1,
-      ease: 'back.out(1.4)',
-    });
-    gsap.set(member, { scale: 0.9 });
-  });
-
-  // --- Project items scroll-reveal with slide ---
-  const PROJECT_TILT_DEG = -5;
-  const PROJECT_PERSPECTIVE_PX = 600;
-
-  gsap.utils.toArray('.project-item').forEach((item, i) => {
-    gsap.to(item, {
-      scrollTrigger: {
-        trigger: item,
-        start: 'top 85%',
-        toggleActions: 'play none none none',
-      },
-      opacity: 1,
-      x: 0,
-      rotateY: 0,
-      duration: 0.7,
-      delay: i * 0.1,
-      ease: 'power2.out',
-    });
-    gsap.set(item, { rotateY: PROJECT_TILT_DEG, transformPerspective: PROJECT_PERSPECTIVE_PX });
-  });
-
-  // --- Contact section ---
-  const contactContent = document.querySelector('.contact-content');
-  if (contactContent) {
-    gsap.to(contactContent, {
-      scrollTrigger: {
-        trigger: contactContent,
-        start: 'top 80%',
-        toggleActions: 'play none none none',
-      },
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      duration: 0.8,
-      ease: 'power2.out',
-    });
-    gsap.set(contactContent, { scale: 0.95 });
-  }
-
-  // --- Section titles ---
-  gsap.utils.toArray('.section-title').forEach((title) => {
-    gsap.from(title, {
-      scrollTrigger: {
-        trigger: title,
         start: 'top 88%',
         toggleActions: 'play none none none',
       },
+      rotateX: 0,
+      opacity: 1,
+      y: 0,
+      duration: 0.9,
+      delay: i * 0.18,
+      ease: 'back.out(1.2)',
+    });
+  });
+
+  // --- Team members — scale up from a coin-flip ─────────────────────
+  gsap.utils.toArray('.team-member').forEach((member, i) => {
+    gsap.set(member, {
+      rotateY: -90,
+      transformPerspective: 700,
       opacity: 0,
-      y: 40,
-      duration: 0.7,
+      scale: 0.8,
+    });
+
+    gsap.to(member, {
+      scrollTrigger: {
+        trigger: member,
+        start: 'top 88%',
+        toggleActions: 'play none none none',
+      },
+      rotateY: 0,
+      opacity: 1,
+      scale: 1,
+      duration: 0.75,
+      delay: i * 0.12,
+      ease: 'power3.out',
+    });
+  });
+
+  // --- Project items — slide from the left with a 3-D lean ─────────
+  gsap.utils.toArray('.project-item').forEach((item, i) => {
+    gsap.set(item, {
+      rotateY: -12,
+      transformPerspective: 700,
+      opacity: 0,
+      x: -60,
+    });
+
+    gsap.to(item, {
+      scrollTrigger: {
+        trigger: item,
+        start: 'top 88%',
+        toggleActions: 'play none none none',
+      },
+      rotateY: 0,
+      opacity: 1,
+      x: 0,
+      duration: 0.75,
+      delay: i * 0.12,
       ease: 'power2.out',
     });
   });
 
-  // --- Navbar hide/show on scroll ---
+  // --- Contact section — zoom-punch entrance ─────────────────────────
+  const contactContent = document.querySelector('.contact-content');
+  if (contactContent) {
+    gsap.set(contactContent, {
+      scale: 0.85,
+      rotateX: 20,
+      transformPerspective: 800,
+      opacity: 0,
+      y: 40,
+    });
+
+    gsap.to(contactContent, {
+      scrollTrigger: {
+        trigger: contactContent,
+        start: 'top 82%',
+        toggleActions: 'play none none none',
+      },
+      scale: 1,
+      rotateX: 0,
+      opacity: 1,
+      y: 0,
+      duration: 0.9,
+      ease: 'back.out(1.5)',
+    });
+  }
+
+  // --- Section titles – slide in with slight rotateX ─────────────────
+  gsap.utils.toArray('.section-title').forEach((title) => {
+    gsap.set(title, { rotateX: -25, transformPerspective: 600, opacity: 0, y: 30 });
+
+    gsap.to(title, {
+      scrollTrigger: {
+        trigger: title,
+        start: 'top 90%',
+        toggleActions: 'play none none none',
+      },
+      rotateX: 0,
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: 'power3.out',
+    });
+  });
+
+  // --- Navbar hide/show on scroll ─────────────────────────────────────
   let lastScroll = 0;
   const navbar = document.getElementById('navbar');
 
