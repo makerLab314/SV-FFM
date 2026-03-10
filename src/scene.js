@@ -58,7 +58,10 @@ export function initScene() {
     const mat = i % 3 === 0 ? wireframeMaterial.clone() : material.clone();
 
     if (i % 3 !== 0) {
-      mat.color = new THREE.Color().setHSL(0 + Math.random() * 0.02, 0.0, 0.18 + Math.random() * 0.15);
+      const HUE_RANGE = 0.02;
+      const LIGHTNESS_BASE = 0.18;
+      const LIGHTNESS_RANGE = 0.15;
+      mat.color = new THREE.Color().setHSL(Math.random() * HUE_RANGE, 0.0, LIGHTNESS_BASE + Math.random() * LIGHTNESS_RANGE);
     }
 
     const mesh = new THREE.Mesh(geo, mat);

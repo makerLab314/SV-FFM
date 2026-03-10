@@ -55,6 +55,10 @@ export function initScrollAnimations() {
   }
 
   // --- 3D Fold/Roll effect: sections fold upward as they scroll out ---
+  const FOLD_MAX_ROTATION_DEG = 8;
+  const FOLD_MAX_DEPTH_PX = -120;
+  const FOLD_FADE_INTENSITY = 0.6;
+
   gsap.utils.toArray('.section').forEach((section) => {
     ScrollTrigger.create({
       trigger: section,
@@ -63,9 +67,9 @@ export function initScrollAnimations() {
       scrub: true,
       onUpdate: (self) => {
         const progress = self.progress;
-        const rotateX = progress * 8;
-        const translateZ = progress * -120;
-        const opacity = 1 - progress * 0.6;
+        const rotateX = progress * FOLD_MAX_ROTATION_DEG;
+        const translateZ = progress * FOLD_MAX_DEPTH_PX;
+        const opacity = 1 - progress * FOLD_FADE_INTENSITY;
         section.style.transform =
           `rotateX(${rotateX}deg) translateZ(${translateZ}px)`;
         section.style.opacity = opacity;
@@ -92,6 +96,9 @@ export function initScrollAnimations() {
   });
 
   // --- About cards scroll-reveal with 3D ---
+  const CARD_TILT_DEG = 12;
+  const CARD_PERSPECTIVE_PX = 800;
+
   gsap.utils.toArray('.about-card').forEach((card, i) => {
     gsap.to(card, {
       scrollTrigger: {
@@ -106,8 +113,7 @@ export function initScrollAnimations() {
       delay: i * 0.15,
       ease: 'power3.out',
     });
-    // Set initial 3D tilt
-    gsap.set(card, { rotateX: 12, transformPerspective: 800 });
+    gsap.set(card, { rotateX: CARD_TILT_DEG, transformPerspective: CARD_PERSPECTIVE_PX });
   });
 
   // --- Team members scroll-reveal ---
@@ -129,6 +135,9 @@ export function initScrollAnimations() {
   });
 
   // --- Project items scroll-reveal with slide ---
+  const PROJECT_TILT_DEG = -5;
+  const PROJECT_PERSPECTIVE_PX = 600;
+
   gsap.utils.toArray('.project-item').forEach((item, i) => {
     gsap.to(item, {
       scrollTrigger: {
@@ -143,7 +152,7 @@ export function initScrollAnimations() {
       delay: i * 0.1,
       ease: 'power2.out',
     });
-    gsap.set(item, { rotateY: -5, transformPerspective: 600 });
+    gsap.set(item, { rotateY: PROJECT_TILT_DEG, transformPerspective: PROJECT_PERSPECTIVE_PX });
   });
 
   // --- Contact section ---
