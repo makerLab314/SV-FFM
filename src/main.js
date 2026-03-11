@@ -22,6 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('requestIdleCallback' in window) {
     window.requestIdleCallback(loadThreeExperience, { timeout: 1200 });
   } else {
-    window.setTimeout(loadThreeExperience, 250);
+    window.setTimeout(loadThreeExperience, 1200);
   }
 });
