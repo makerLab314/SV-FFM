@@ -1,6 +1,6 @@
 /* ========================================
    Scroll Animations (GSAP + ScrollTrigger)
-   Skeuomorphic 3D rolodex fold/unroll + parallax
+   Clean reveals + parallax
    ======================================== */
 
 import gsap from 'gsap';
@@ -9,75 +9,10 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 export function initScrollAnimations() {
-  // --- Hero entrance ---
-  const heroLines = document.querySelectorAll('.hero-title .line');
-  const heroSub = document.querySelector('.hero-subtitle');
-  const heroTag = document.querySelector('.hero-tagline');
-  const scrollInd = document.querySelector('.scroll-indicator');
-
-  // Set initial state BEFORE creating the timeline
-  heroLines.forEach((line) => {
-    gsap.set(line, { rotateX: -45, transformPerspective: 800 });
-  });
-
-  const heroTl = gsap.timeline({ delay: 0.3 });
-
-  heroLines.forEach((line, i) => {
-    heroTl.to(
-      line,
-      {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
-        duration: 1.1,
-        ease: 'power4.out',
-      },
-      i * 0.25
-    );
-  });
-
-  if (heroSub) {
-    heroTl.to(
-      heroSub,
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.9,
-        ease: 'power2.out',
-      },
-      0.7
-    );
-  }
-
-  if (heroTag) {
-    heroTl.to(
-      heroTag,
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        ease: 'power2.out',
-      },
-      1.0
-    );
-  }
-
-  if (scrollInd) {
-    heroTl.to(
-      scrollInd,
-      {
-        opacity: 1,
-        duration: 0.6,
-        ease: 'power2.out',
-      },
-      1.4
-    );
-  }
-
   // --- Rolodex / page-fold effect ─────────────────────────────────────
-  const FOLD_EXIT_ROT   = 18;
-  const FOLD_DEPTH_PX   = -180;
-  const FOLD_FADE       = 0.55;
+  const FOLD_EXIT_ROT   = 14;
+  const FOLD_DEPTH_PX   = -140;
+  const FOLD_FADE       = 0.50;
 
   gsap.utils.toArray('.section').forEach((section) => {
     ScrollTrigger.create({
@@ -109,9 +44,9 @@ export function initScrollAnimations() {
         if (self.direction === 1) {
           const entryProgress = 1 - self.progress;
           const eased = entryProgress * entryProgress;
-          const rotX  = -eased * 12;
+          const rotX  = -eased * 10;
           section.style.transformOrigin = 'center bottom';
-          section.style.transform = `rotateX(${rotX}deg) translateZ(${-eased * 60}px)`;
+          section.style.transform = `rotateX(${rotX}deg) translateZ(${-eased * 50}px)`;
         }
       },
       onEnterBack: () => {
@@ -129,35 +64,17 @@ export function initScrollAnimations() {
         end: 'bottom top',
         scrub: 1.5,
       },
-      y: -60,
+      y: -50,
       ease: 'none',
     });
   });
 
-  // ── Hero-logo parallax (slower than content) ─────────────────────────
-  const heroLogoBg = document.querySelector('.hero-logo-bg');
-  if (heroLogoBg) {
-    gsap.to(heroLogoBg, {
-      scrollTrigger: {
-        trigger: '#hero',
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 2,
-      },
-      y: -120,
-      scale: 1.15,
-      ease: 'none',
-    });
-  }
-
-  // --- About cards — rolodex flip-in from behind ─────────────────────
+  // --- About cards — smooth reveal ─────────────────────────────────
   gsap.utils.toArray('.about-card').forEach((card, i) => {
     gsap.set(card, {
-      rotateX: 55,
-      transformPerspective: 900,
-      transformOrigin: 'center bottom',
       opacity: 0,
-      y: 60,
+      y: 50,
+      scale: 0.97,
     });
 
     gsap.to(card, {
@@ -166,46 +83,43 @@ export function initScrollAnimations() {
         start: 'top 88%',
         toggleActions: 'play none none none',
       },
-      rotateX: 0,
       opacity: 1,
       y: 0,
-      duration: 0.9,
-      delay: i * 0.18,
-      ease: 'back.out(1.2)',
-    });
-  });
-
-  // --- Struktur cards — scale up with rotation ─────────────────────
-  gsap.utils.toArray('.struktur-card').forEach((card, i) => {
-    gsap.set(card, {
-      rotateY: -45,
-      transformPerspective: 700,
-      opacity: 0,
-      scale: 0.85,
-    });
-
-    gsap.to(card, {
-      scrollTrigger: {
-        trigger: card,
-        start: 'top 88%',
-        toggleActions: 'play none none none',
-      },
-      rotateY: 0,
-      opacity: 1,
       scale: 1,
-      duration: 0.75,
-      delay: i * 0.1,
+      duration: 0.8,
+      delay: i * 0.15,
       ease: 'power3.out',
     });
   });
 
-  // --- Project items — slide from the left with a 3-D lean ─────────
+  // --- Struktur cards — scale up ─────────────────────────────────
+  gsap.utils.toArray('.struktur-card').forEach((card, i) => {
+    gsap.set(card, {
+      opacity: 0,
+      y: 40,
+      scale: 0.95,
+    });
+
+    gsap.to(card, {
+      scrollTrigger: {
+        trigger: card,
+        start: 'top 88%',
+        toggleActions: 'play none none none',
+      },
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 0.7,
+      delay: i * 0.08,
+      ease: 'power3.out',
+    });
+  });
+
+  // --- Project items — slide from the left ─────────────────────
   gsap.utils.toArray('.project-item').forEach((item, i) => {
     gsap.set(item, {
-      rotateY: -12,
-      transformPerspective: 700,
       opacity: 0,
-      x: -60,
+      x: -40,
     });
 
     gsap.to(item, {
@@ -214,23 +128,19 @@ export function initScrollAnimations() {
         start: 'top 88%',
         toggleActions: 'play none none none',
       },
-      rotateY: 0,
       opacity: 1,
       x: 0,
-      duration: 0.75,
-      delay: i * 0.12,
+      duration: 0.7,
+      delay: i * 0.1,
       ease: 'power2.out',
     });
   });
 
-  // --- Vernetzung cards — flip in ─────────────────────────────────
+  // --- Vernetzung cards — fade in ─────────────────────────────────
   gsap.utils.toArray('.vernetzung-card').forEach((card, i) => {
     gsap.set(card, {
-      rotateX: 35,
-      transformPerspective: 900,
-      transformOrigin: 'center bottom',
       opacity: 0,
-      y: 50,
+      y: 40,
     });
 
     gsap.to(card, {
@@ -239,12 +149,11 @@ export function initScrollAnimations() {
         start: 'top 88%',
         toggleActions: 'play none none none',
       },
-      rotateX: 0,
       opacity: 1,
       y: 0,
-      duration: 0.85,
-      delay: i * 0.2,
-      ease: 'back.out(1.3)',
+      duration: 0.8,
+      delay: i * 0.18,
+      ease: 'power3.out',
     });
   });
 
@@ -252,11 +161,9 @@ export function initScrollAnimations() {
   const archivContent = document.querySelector('.archiv-content');
   if (archivContent) {
     gsap.set(archivContent, {
-      scale: 0.88,
-      rotateX: 15,
-      transformPerspective: 800,
+      scale: 0.92,
       opacity: 0,
-      y: 40,
+      y: 30,
     });
 
     gsap.to(archivContent, {
@@ -266,23 +173,20 @@ export function initScrollAnimations() {
         toggleActions: 'play none none none',
       },
       scale: 1,
-      rotateX: 0,
       opacity: 1,
       y: 0,
-      duration: 0.9,
-      ease: 'back.out(1.4)',
+      duration: 0.85,
+      ease: 'power3.out',
     });
   }
 
-  // --- Contact section — zoom-punch entrance ─────────────────────────
+  // --- Contact section — entrance ─────────────────────────────────
   const contactContent = document.querySelector('.contact-content');
   if (contactContent) {
     gsap.set(contactContent, {
-      scale: 0.85,
-      rotateX: 20,
-      transformPerspective: 800,
+      scale: 0.92,
       opacity: 0,
-      y: 40,
+      y: 30,
     });
 
     gsap.to(contactContent, {
@@ -292,17 +196,16 @@ export function initScrollAnimations() {
         toggleActions: 'play none none none',
       },
       scale: 1,
-      rotateX: 0,
       opacity: 1,
       y: 0,
-      duration: 0.9,
-      ease: 'back.out(1.5)',
+      duration: 0.85,
+      ease: 'power3.out',
     });
   }
 
-  // --- Section titles – slide in with slight rotateX ─────────────────
+  // --- Section titles – slide in ─────────────────────────────────
   gsap.utils.toArray('.section-title').forEach((title) => {
-    gsap.set(title, { rotateX: -25, transformPerspective: 600, opacity: 0, y: 30 });
+    gsap.set(title, { opacity: 0, y: 24 });
 
     gsap.to(title, {
       scrollTrigger: {
@@ -310,17 +213,33 @@ export function initScrollAnimations() {
         start: 'top 90%',
         toggleActions: 'play none none none',
       },
-      rotateX: 0,
       opacity: 1,
       y: 0,
-      duration: 0.8,
+      duration: 0.75,
       ease: 'power3.out',
+    });
+  });
+
+  // --- Section labels – fade in ─────────────────────────────────
+  gsap.utils.toArray('.section-label').forEach((label) => {
+    gsap.set(label, { opacity: 0, y: 12 });
+
+    gsap.to(label, {
+      scrollTrigger: {
+        trigger: label,
+        start: 'top 92%',
+        toggleActions: 'play none none none',
+      },
+      opacity: 0.7,
+      y: 0,
+      duration: 0.6,
+      ease: 'power2.out',
     });
   });
 
   // --- Section leads – fade in ─────────────────────────────────────
   gsap.utils.toArray('.section-lead').forEach((lead) => {
-    gsap.set(lead, { opacity: 0, y: 20 });
+    gsap.set(lead, { opacity: 0, y: 16 });
 
     gsap.to(lead, {
       scrollTrigger: {
@@ -330,7 +249,7 @@ export function initScrollAnimations() {
       },
       opacity: 1,
       y: 0,
-      duration: 0.7,
+      duration: 0.65,
       ease: 'power2.out',
     });
   });

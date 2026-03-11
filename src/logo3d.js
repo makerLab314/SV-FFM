@@ -39,10 +39,10 @@ export function initLogo3D() {
   backLight.position.set(-2, -1, -2);
   scene.add(backLight);
 
-  // Warm accent light
-  const warmLight = new THREE.PointLight(0xd4a853, 0.4, 20);
-  warmLight.position.set(1, -1, 3);
-  scene.add(warmLight);
+  // Cyan accent light
+  const accentLight = new THREE.PointLight(0x00e5ff, 0.4, 20);
+  accentLight.position.set(1, -1, 3);
+  scene.add(accentLight);
 
   // Load STL
   const loader = new STLLoader();

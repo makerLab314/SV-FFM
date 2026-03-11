@@ -3,6 +3,7 @@ import { initLogo3D } from './logo3d.js';
 import { initScene } from './scene.js';
 import { initCursor } from './cursor.js';
 import { initScrollAnimations } from './scroll.js';
+import { initHeroTypewriter } from './typewriter.js';
 
 /* ========================================
    Main entry – SV Website
@@ -13,4 +14,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initLogo3D();
   initScene();
   initScrollAnimations();
+  initHeroTypewriter();
 });

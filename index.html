@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@400;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -32,29 +32,48 @@
         <li><a href="#archiv">Archiv</a></li>
         <li><a href="#kontakt">Kontakt</a></li>
       </ul>
+      <div class="nav-social">
+        <a href="https://www.instagram.com/sv_waldorf_frankfurt/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="nav-social-link">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+      </div>
     </nav>
 
     <!-- Main content -->
     <main>
       <!-- Hero Section -->
       <section id="hero" class="section hero-section">
-        <div class="hero-media">
-          <div class="hero-placeholder">
-            <img src="/assets/sv-logo.png" alt="SV Logo" class="hero-logo-bg" />
-          </div>
-        </div>
+        <div class="hero-bg-grid"></div>
+        <div class="hero-glow hero-glow-1"></div>
+        <div class="hero-glow hero-glow-2"></div>
+
         <div class="hero-content">
-          <h1 class="hero-title" data-scroll-reveal>
-            <span class="line">Wir sind</span>
-            <span class="line accent">die SV.</span>
+          <div class="hero-badge">
+            <span class="hero-badge-dot"></span>
+            Schülervertretung · Est. 1947
+          </div>
+          <h1 class="hero-title">
+            <span class="hero-typewriter-line" data-text="Wir sind"></span>
+            <span class="hero-typewriter-line accent" data-text="die SV."></span>
           </h1>
-          <p class="hero-subtitle" data-scroll-reveal>
+          <p class="hero-subtitle">
             Schülervertretung der Freien Waldorfschule Frankfurt am Main
           </p>
-          <p class="hero-tagline" data-scroll-reveal>
+          <p class="hero-tagline">
             Demokratie leben · Schule gestalten · Zukunft formen
           </p>
+          <div class="hero-cta-group">
+            <a href="#about" class="btn-primary">
+              <span>Mehr erfahren</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <a href="https://www.instagram.com/sv_waldorf_frankfurt/" target="_blank" rel="noopener noreferrer" class="btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+              <span>Instagram</span>
+            </a>
+          </div>
         </div>
+
         <div class="scroll-indicator">
           <span>Scroll</span>
           <div class="scroll-line"></div>
@@ -67,14 +86,17 @@
       <!-- About Section -->
       <section id="about" class="section about-section">
         <div class="section-inner">
-          <h2 class="section-title" data-scroll-reveal>Über uns</h2>
+          <div class="section-header">
+            <span class="section-label">01 / Wer wir sind</span>
+            <h2 class="section-title" data-scroll-reveal>Über uns</h2>
+          </div>
           <p class="section-lead" data-scroll-reveal>
             Seit der Gründung am 4.&nbsp;Juli 1947 steht die Freie Waldorfschule Frankfurt am Main für
             Selbstverwaltung und pädagogischen Idealismus. Die SV ist das demokratische Herzstück
             der rund 825&nbsp;Schüler:innen – von der Vorklasse bis zur 13.&nbsp;Jahrgangsstufe.
           </p>
           <div class="about-grid">
-            <div class="about-card" data-scroll-reveal>
+            <div class="about-card glow-card" data-scroll-reveal>
               <div class="card-number">01</div>
               <h3>Echte Selbstverwaltung</h3>
               <p>
@@ -83,7 +105,7 @@
                 und die SV ist eine tragende Säule dieser Partizipation.
               </p>
             </div>
-            <div class="about-card" data-scroll-reveal>
+            <div class="about-card glow-card" data-scroll-reveal>
               <div class="card-number">02</div>
               <h3>Stimme der Schülerschaft</h3>
               <p>
@@ -92,7 +114,7 @@
                 auf Augenhöhe im Geist der Erziehungspartnerschaft.
               </p>
             </div>
-            <div class="about-card" data-scroll-reveal>
+            <div class="about-card glow-card" data-scroll-reveal>
               <div class="card-number">03</div>
               <h3>Demokratie lernen</h3>
               <p>
@@ -108,13 +130,16 @@
       <!-- Struktur Section -->
       <section id="struktur" class="section struktur-section">
         <div class="section-inner">
-          <h2 class="section-title" data-scroll-reveal>Unsere Struktur</h2>
+          <div class="section-header">
+            <span class="section-label">02 / Organisation</span>
+            <h2 class="section-title" data-scroll-reveal>Unsere Struktur</h2>
+          </div>
           <p class="section-lead" data-scroll-reveal>
             Die SV zeichnet sich durch eine differenzierte Rollenverteilung aus, die
             organisatorische, finanzielle und dokumentarische Aufgaben professionell abdeckt.
           </p>
           <div class="struktur-grid">
-            <div class="struktur-card" data-scroll-reveal>
+            <div class="struktur-card glow-card" data-scroll-reveal>
               <div class="struktur-icon">🎤</div>
               <h3>Schulsprecher:innen</h3>
               <p>
@@ -122,7 +147,7 @@
                 Schülerschaft bei Monatsfeiern, Informationsabenden und offiziellen Anlässen.
               </p>
             </div>
-            <div class="struktur-card" data-scroll-reveal>
+            <div class="struktur-card glow-card" data-scroll-reveal>
               <div class="struktur-icon">🤝</div>
               <h3>Stellvertretung</h3>
               <p>
@@ -130,7 +155,7 @@
                 der Vertretung sicher – damit die SV immer handlungsfähig bleibt.
               </p>
             </div>
-            <div class="struktur-card" data-scroll-reveal>
+            <div class="struktur-card glow-card" data-scroll-reveal>
               <div class="struktur-icon">💰</div>
               <h3>Kassenwart &amp; Finanzen</h3>
               <p>
@@ -138,7 +163,7 @@
                 und AG-Unterstützung – wirtschaftliches Denken in der Praxis.
               </p>
             </div>
-            <div class="struktur-card" data-scroll-reveal>
+            <div class="struktur-card glow-card" data-scroll-reveal>
               <div class="struktur-icon">📝</div>
               <h3>Protokollführung</h3>
               <p>
@@ -146,7 +171,7 @@
                 Beschlüsse ermöglichen Rechenschaft gegenüber der Schulkonferenz.
               </p>
             </div>
-            <div class="struktur-card" data-scroll-reveal>
+            <div class="struktur-card glow-card" data-scroll-reveal>
               <div class="struktur-icon">📢</div>
               <h3>Öffentlichkeitsarbeit</h3>
               <p>
@@ -154,7 +179,7 @@
                 unter anderem über die digitale Schulzeitung „Heiße Feder".
               </p>
             </div>
-            <div class="struktur-card" data-scroll-reveal>
+            <div class="struktur-card glow-card" data-scroll-reveal>
               <div class="struktur-icon">⚖️</div>
               <h3>Delegationen</h3>
               <p>
@@ -169,52 +194,70 @@
       <!-- Projects Section -->
       <section id="projekte" class="section projects-section">
         <div class="section-inner">
-          <h2 class="section-title" data-scroll-reveal>Projekte &amp; Initiativen</h2>
+          <div class="section-header">
+            <span class="section-label">03 / Engagement</span>
+            <h2 class="section-title" data-scroll-reveal>Projekte &amp; Initiativen</h2>
+          </div>
           <div class="projects-list">
             <div class="project-item" data-scroll-reveal>
               <span class="project-year">2023/24</span>
-              <h3>Schülerschutzkonzept</h3>
-              <p>
-                Aktive Beteiligung an der Erstellung des Verhaltenscodex – erarbeitet
-                in Zusammenarbeit mit Vertreter:innen aller Klassenstufen.
-                Schüler:innen als Architekt:innen ihrer eigenen sicheren Umgebung.
-              </p>
+              <div class="project-content">
+                <h3>Schülerschutzkonzept</h3>
+                <p>
+                  Aktive Beteiligung an der Erstellung des Verhaltenscodex – erarbeitet
+                  in Zusammenarbeit mit Vertreter:innen aller Klassenstufen.
+                  Schüler:innen als Architekt:innen ihrer eigenen sicheren Umgebung.
+                </p>
+              </div>
+              <span class="project-arrow">→</span>
             </div>
             <div class="project-item" data-scroll-reveal>
               <span class="project-year">Laufend</span>
-              <h3>Digital Heroes</h3>
-              <p>
-                Oberstufenschüler:innen werden als Mentor:innen für die Mittelstufe
-                ausgebildet – für Medienkompetenz und den bewussten Umgang mit
-                TikTok, Instagram und YouTube.
-              </p>
+              <div class="project-content">
+                <h3>Digital Heroes</h3>
+                <p>
+                  Oberstufenschüler:innen werden als Mentor:innen für die Mittelstufe
+                  ausgebildet – für Medienkompetenz und den bewussten Umgang mit
+                  TikTok, Instagram und YouTube.
+                </p>
+              </div>
+              <span class="project-arrow">→</span>
             </div>
             <div class="project-item" data-scroll-reveal>
               <span class="project-year">Laufend</span>
-              <h3>Peer-Group-Mediation</h3>
-              <p>
-                Schüler:innen schlichten Konflikte unter Gleichaltrigen.
-                Diese Form der Mediation reduziert Hierarchie und fördert
-                Sozialkompetenz.
-              </p>
+              <div class="project-content">
+                <h3>Peer-Group-Mediation</h3>
+                <p>
+                  Schüler:innen schlichten Konflikte unter Gleichaltrigen.
+                  Diese Form der Mediation reduziert Hierarchie und fördert
+                  Sozialkompetenz.
+                </p>
+              </div>
+              <span class="project-arrow">→</span>
             </div>
             <div class="project-item" data-scroll-reveal>
               <span class="project-year">Jährlich</span>
-              <h3>Berufsinfo-Tage</h3>
-              <p>
-                Mehrtägige Berufsorientierung mit knapp 20&nbsp;Vorträgen
-                für die Klassen 9–12. Die SV evaluiert und bringt Vorschläge
-                für relevante Berufsfelder ein.
-              </p>
+              <div class="project-content">
+                <h3>Berufsinfo-Tage</h3>
+                <p>
+                  Mehrtägige Berufsorientierung mit knapp 20&nbsp;Vorträgen
+                  für die Klassen 9–12. Die SV evaluiert und bringt Vorschläge
+                  für relevante Berufsfelder ein.
+                </p>
+              </div>
+              <span class="project-arrow">→</span>
             </div>
             <div class="project-item" data-scroll-reveal>
               <span class="project-year">Tradition</span>
-              <h3>Kulturleben</h3>
-              <p>
-                Klassenspiele der 8. und 12.&nbsp;Klassen, Monatsfeiern,
-                Adventsfest, Sommerfest und Konzerte der Schul-Orchester
-                und -Chöre – die SV unterstützt und moderiert.
-              </p>
+              <div class="project-content">
+                <h3>Kulturleben</h3>
+                <p>
+                  Klassenspiele der 8. und 12.&nbsp;Klassen, Monatsfeiern,
+                  Adventsfest, Sommerfest und Konzerte der Schul-Orchester
+                  und -Chöre – die SV unterstützt und moderiert.
+                </p>
+              </div>
+              <span class="project-arrow">→</span>
             </div>
           </div>
         </div>
@@ -223,13 +266,16 @@
       <!-- Vernetzung Section -->
       <section id="vernetzung" class="section vernetzung-section">
         <div class="section-inner">
-          <h2 class="section-title" data-scroll-reveal>Über den Campus hinaus</h2>
+          <div class="section-header">
+            <span class="section-label">04 / Netzwerk</span>
+            <h2 class="section-title" data-scroll-reveal>Über den Campus hinaus</h2>
+          </div>
           <p class="section-lead" data-scroll-reveal>
             Die SV der Frankfurter Waldorfschule ist weit über den lokalen Campus hinaus
             vernetzt und nimmt eine führende Rolle in der bundesweiten Waldorf-Schülerbewegung ein.
           </p>
           <div class="vernetzung-grid">
-            <div class="vernetzung-card" data-scroll-reveal>
+            <div class="vernetzung-card glow-card" data-scroll-reveal>
               <div class="vernetzung-badge">Bundesweit</div>
               <h3>WaldorfSV</h3>
               <p>
@@ -239,7 +285,7 @@
                 wie die 32.&nbsp;BST unter dem Thema „Mensch, Mitte, Muster" in Göttingen.
               </p>
             </div>
-            <div class="vernetzung-card" data-scroll-reveal>
+            <div class="vernetzung-card glow-card" data-scroll-reveal>
               <div class="vernetzung-badge">Kommunal</div>
               <h3>Stadtschülerrat Frankfurt</h3>
               <p>
@@ -256,7 +302,10 @@
       <!-- Archiv Section -->
       <section id="archiv" class="section archiv-section">
         <div class="section-inner">
-          <h2 class="section-title" data-scroll-reveal>SV-Archiv</h2>
+          <div class="section-header">
+            <span class="section-label">05 / Dokumente</span>
+            <h2 class="section-title" data-scroll-reveal>SV-Archiv</h2>
+          </div>
           <div class="archiv-content" data-scroll-reveal>
             <div class="archiv-visual">
               <div class="archiv-icon-stack">
@@ -274,10 +323,10 @@
                 href="https://professorengineergit.github.io/SV-Archiv/"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="archiv-btn"
+                class="btn-primary archiv-btn"
               >
                 <span>Zum SV-Archiv</span>
-                <span class="archiv-arrow">→</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
               </a>
             </div>
           </div>
@@ -287,15 +336,25 @@
       <!-- Contact Section -->
       <section id="kontakt" class="section contact-section">
         <div class="section-inner">
-          <h2 class="section-title" data-scroll-reveal>Kontakt</h2>
+          <div class="section-header">
+            <span class="section-label">06 / Mitmachen</span>
+            <h2 class="section-title" data-scroll-reveal>Kontakt</h2>
+          </div>
           <div class="contact-content" data-scroll-reveal>
             <p class="contact-text">
               Du hast Fragen, Ideen oder willst mitmachen?<br />
               Die SV ist für die gesamte Schulgemeinschaft erreichbar.
             </p>
-            <a href="mailto:sv@waldorfschule-frankfurt.de" class="contact-btn">
-              sv@waldorfschule-frankfurt.de
-            </a>
+            <div class="contact-actions">
+              <a href="mailto:sv@waldorfschule-frankfurt.de" class="btn-primary contact-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <span>sv@waldorfschule-frankfurt.de</span>
+              </a>
+              <a href="https://www.instagram.com/sv_waldorf_frankfurt/" target="_blank" rel="noopener noreferrer" class="btn-secondary contact-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                <span>@sv_waldorf_frankfurt</span>
+              </a>
+            </div>
             <p class="contact-info">
               Schülersprechzeiten im Schulbüro: 11:35 – 12:15 Uhr
             </p>
@@ -307,8 +366,24 @@
     <!-- Footer -->
     <footer>
       <div class="footer-inner">
-        <p>&copy; 2026 Schülervertretung – Freie Waldorfschule Frankfurt am Main</p>
-        <p class="footer-sub">Gegründet 1947 · Dornbusch, Frankfurt · Waldorfschulverein Frankfurt am Main e.V.</p>
+        <div class="footer-top">
+          <div class="footer-brand">
+            <span class="footer-logo-text">SV FFM</span>
+            <p>Schülervertretung der Freien Waldorfschule Frankfurt am Main</p>
+          </div>
+          <div class="footer-social">
+            <a href="https://www.instagram.com/sv_waldorf_frankfurt/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="footer-social-link">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+            <a href="mailto:sv@waldorfschule-frankfurt.de" aria-label="E-Mail" class="footer-social-link">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2026 Schülervertretung – Freie Waldorfschule Frankfurt am Main</p>
+          <p class="footer-sub">Gegründet 1947 · Dornbusch, Frankfurt · Waldorfschulverein Frankfurt am Main e.V.</p>
+        </div>
       </div>
     </footer>
 
