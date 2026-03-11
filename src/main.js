@@ -1,6 +1,4 @@
 import './style.css';
-import { initLogo3D } from './logo3d.js';
-import { initScene } from './scene.js';
 import { initCursor } from './cursor.js';
 import { initScrollAnimations } from './scroll.js';
 
@@ -10,7 +8,20 @@ import { initScrollAnimations } from './scroll.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   initCursor();
-  initLogo3D();
-  initScene();
   initScrollAnimations();
+
+  const loadThreeExperience = async () => {
+    const [{ initLogo3D }, { initScene }] = await Promise.all([
+      import('./logo3d.js'),
+      import('./scene.js'),
+    ]);
+    initLogo3D();
+    initScene();
+  };
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(loadThreeExperience, { timeout: 1200 });
+  } else {
+    window.setTimeout(loadThreeExperience, 250);
+  }
 });
