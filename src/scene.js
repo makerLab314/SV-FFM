@@ -77,7 +77,7 @@ export function initScene() {
 
   /* ── Renderer ─────────────────────────────────────────────────────── */
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 1);
   renderer.toneMapping        = THREE.ACESFilmicToneMapping;
@@ -105,9 +105,9 @@ export function initScene() {
 
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.45, // strength
-    0.30, // radius
-    0.88  // threshold
+    0.35, // strength (reduced for performance)
+    0.25, // radius
+    0.90  // threshold
   );
   composer.addPass(bloomPass);
   composer.addPass(new OutputPass());
@@ -232,7 +232,7 @@ export function initScene() {
   });
 
   /* ── Particle galaxy (cylindrical cloud behind pillar) ────────────── */
-  const PARTICLE_COUNT = 2200;
+  const PARTICLE_COUNT = 1000;
   const pPos = new Float32Array(PARTICLE_COUNT * 3);
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const a = Math.random() * Math.PI * 2;
@@ -253,9 +253,9 @@ export function initScene() {
 
   /* ── Orbital particle rings (depth layers) ────────────────────────── */
   const orbRings = [];
-  for (let ri = 0; ri < 4; ri++) {
+  for (let ri = 0; ri < 3; ri++) {
     const rad = 12 + ri * 7;
-    const cnt = 160 + ri * 40;
+    const cnt = 100 + ri * 30;
     const pos = new Float32Array(cnt * 3);
     for (let j = 0; j < cnt; j++) {
       const a = (j / cnt) * Math.PI * 2;
