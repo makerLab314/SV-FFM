@@ -983,3 +983,12 @@ footer {
   .cursor, .cursor-follower { display: none; }
   body { cursor: auto; }
 }
+
+/* ═══════════════════════════════════════════
+   Reduced motion
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .typewriter-cursor { animation: none; opacity: 1; }
+  .scroll-line { animation: none; }
+  [data-scroll-reveal] { will-change: auto; }
+}

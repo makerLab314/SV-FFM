@@ -20,6 +20,12 @@ function initTypewriter() {
     'Seit 1947.',
   ];
 
+  /* Respect prefers-reduced-motion: show static text instead */
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    el.textContent = phrases.join(' · ');
+    return;
+  }
+
   let phraseIdx = 0;
   let charIdx = 0;
   let isDeleting = false;
