@@ -1,6 +1,6 @@
 /* ========================================
    3D Logo – top-left corner (STL)
-   Follows cursor rotation
+   Only rotates on hover over the canvas
    ======================================== */
 
 import * as THREE from 'three';
@@ -10,8 +10,8 @@ export function initLogo3D() {
   const canvas = document.getElementById('logo-canvas');
   if (!canvas) return;
 
-  const width = 64;
-  const height = 64;
+  const width = 100;
+  const height = 100;
 
   // Renderer
   const renderer = new THREE.WebGLRenderer({
@@ -39,6 +39,11 @@ export function initLogo3D() {
   backLight.position.set(-2, -1, -2);
   scene.add(backLight);
 
+  // Warm accent light
+  const warmLight = new THREE.PointLight(0xd4a853, 0.4, 20);
+  warmLight.position.set(1, -1, 3);
+  scene.add(warmLight);
+
   // Load STL
   const loader = new STLLoader();
   let logoMesh = null;
@@ -52,12 +57,12 @@ export function initLogo3D() {
     const size = new THREE.Vector3();
     bbox.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 2.2 / maxDim;
+    const scale = 2.4 / maxDim;
 
     const material = new THREE.MeshStandardMaterial({
-      color: 0xcccccc,
-      metalness: 0.5,
-      roughness: 0.3,
+      color: 0xdddddd,
+      metalness: 0.55,
+      roughness: 0.25,
     });
 
     logoMesh = new THREE.Mesh(geometry, material);
@@ -65,15 +70,29 @@ export function initLogo3D() {
     scene.add(logoMesh);
   });
 
-  // Track mouse for rotation
+  // Track hover state and mouse position over the canvas
+  let isHovered = false;
   let targetRotX = 0;
   let targetRotY = 0;
 
-  document.addEventListener('mousemove', (e) => {
-    const nx = (e.clientX / window.innerWidth) * 2 - 1;
-    const ny = (e.clientY / window.innerHeight) * 2 - 1;
-    targetRotY = nx * 0.6;
-    targetRotX = -ny * 0.4;
+  canvas.addEventListener('mouseenter', () => {
+    isHovered = true;
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    isHovered = false;
+    // Reset rotation target when leaving
+    targetRotX = 0;
+    targetRotY = 0;
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (!isHovered) return;
+    const rect = canvas.getBoundingClientRect();
+    const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+    targetRotY = nx * 0.8;
+    targetRotX = -ny * 0.5;
   });
 
   // Animation loop
