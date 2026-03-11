@@ -74,10 +74,13 @@ function createPillarTexture() {
 export function initScene() {
   const canvas = document.getElementById('scene-canvas');
   if (!canvas) return;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const useLiteScene = prefersReducedMotion || isMobile;
 
   /* ── Renderer ─────────────────────────────────────────────────────── */
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, useLiteScene ? 1.25 : 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 1);
   renderer.toneMapping        = THREE.ACESFilmicToneMapping;
@@ -100,17 +103,21 @@ export function initScene() {
   roomEnv.dispose();
 
   /* ── Post-Processing (Bloom) ──────────────────────────────────────── */
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
+  let composer = null;
+  let bloomPass = null;
+  if (!useLiteScene) {
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
 
-  const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.45, // strength
-    0.30, // radius
-    0.88  // threshold
-  );
-  composer.addPass(bloomPass);
-  composer.addPass(new OutputPass());
+    bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.45, // strength
+      0.30, // radius
+      0.92  // threshold
+    );
+    composer.addPass(bloomPass);
+    composer.addPass(new OutputPass());
+  }
 
   /* ── Lights ───────────────────────────────────────────────────────── */
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
@@ -207,9 +214,9 @@ export function initScene() {
   pillarGroup.add(new THREE.Mesh(innerGeo, acrylicMat));
 
   /* horizontal edge glow rings */
-  const ringYs = [-14, -8, -2, 4, 10];
+  const ringYs = useLiteScene ? [-10, 0, 10] : [-14, -8, -2, 4, 10];
   ringYs.forEach((ry) => {
-    const rGeo = new THREE.TorusGeometry(PILLAR_RADIUS + 0.04, 0.022, 14, 80);
+    const rGeo = new THREE.TorusGeometry(PILLAR_RADIUS + 0.04, 0.022, 12, useLiteScene ? 48 : 80);
     const rMat = new THREE.MeshBasicMaterial({
       color: 0xffffff, transparent: true, opacity: 0.30,
     });
@@ -232,7 +239,7 @@ export function initScene() {
   });
 
   /* ── Particle galaxy (cylindrical cloud behind pillar) ────────────── */
-  const PARTICLE_COUNT = 2200;
+  const PARTICLE_COUNT = useLiteScene ? 700 : 1400;
   const pPos = new Float32Array(PARTICLE_COUNT * 3);
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const a = Math.random() * Math.PI * 2;
@@ -253,9 +260,9 @@ export function initScene() {
 
   /* ── Orbital particle rings (depth layers) ────────────────────────── */
   const orbRings = [];
-  for (let ri = 0; ri < 4; ri++) {
+  for (let ri = 0; ri < (useLiteScene ? 2 : 3); ri++) {
     const rad = 12 + ri * 7;
-    const cnt = 160 + ri * 40;
+    const cnt = 110 + ri * 30;
     const pos = new Float32Array(cnt * 3);
     for (let j = 0; j < cnt; j++) {
       const a = (j / cnt) * Math.PI * 2;
@@ -294,20 +301,24 @@ export function initScene() {
   let targetCamX = 0;
   let targetCamY = 0;
 
-  document.addEventListener('mousemove', (e) => {
-    const mx = (e.clientX / window.innerWidth  - 0.5) * 2;
-    const my = (e.clientY / window.innerHeight - 0.5) * 2;
-    targetCamX =  mx * 2.8;
-    targetCamY = -my * 1.8;
-  });
+  if (!useLiteScene) {
+    document.addEventListener('mousemove', (e) => {
+      const mx = (e.clientX / window.innerWidth  - 0.5) * 2;
+      const my = (e.clientY / window.innerHeight - 0.5) * 2;
+      targetCamX =  mx * 2.8;
+      targetCamY = -my * 1.8;
+    });
+  }
 
   /* ── Resize ───────────────────────────────────────────────────────── */
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight);
-    bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+    if (composer && bloomPass) {
+      composer.setSize(window.innerWidth, window.innerHeight);
+      bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+    }
   });
 
   /* ── Animation loop ───────────────────────────────────────────────── */
@@ -328,22 +339,28 @@ export function initScene() {
     camera.position.y += (targetCamY - camera.position.y) * 0.016;
     camera.lookAt(0, 0, 0);
 
-    /* particle cloud slow drift */
-    particles.rotation.y = elapsed * 0.010;
+    if (!useLiteScene) {
+      /* particle cloud slow drift */
+      particles.rotation.y = elapsed * 0.010;
 
-    /* orbital rings */
-    orbRings.forEach((ring) => {
-      ring.rotation.y += ring.userData.speed * 0.003;
-    });
+      /* orbital rings */
+      orbRings.forEach((ring) => {
+        ring.rotation.y += ring.userData.speed * 0.003;
+      });
 
-    /* dynamic lights orbit around pillar */
-    const la = elapsed * 0.18;
-    fillLight.position.x  =  Math.cos(la) * 12;
-    fillLight.position.z  =  10 + Math.sin(la) * 7;
-    rimLight.position.x   =  Math.cos(la + Math.PI) * 12;
-    rimLight.position.z   = -8 + Math.sin(la * 0.7) * 5;
+      /* dynamic lights orbit around pillar */
+      const la = elapsed * 0.18;
+      fillLight.position.x  =  Math.cos(la) * 12;
+      fillLight.position.z  =  10 + Math.sin(la) * 7;
+      rimLight.position.x   =  Math.cos(la + Math.PI) * 12;
+      rimLight.position.z   = -8 + Math.sin(la * 0.7) * 5;
+    }
 
-    composer.render();
+    if (composer) {
+      composer.render();
+    } else {
+      renderer.render(scene, camera);
+    }
   }
 
   animate();

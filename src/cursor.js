@@ -7,6 +7,16 @@ export function initCursor() {
   const follower = document.getElementById('cursor-follower');
 
   if (!cursor || !follower) return;
+  const disableCustomCursor =
+    window.matchMedia('(pointer: coarse)').matches ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (disableCustomCursor) {
+    cursor.style.display = 'none';
+    follower.style.display = 'none';
+    document.body.style.cursor = 'auto';
+    return;
+  }
 
   let mouseX = 0;
   let mouseY = 0;
@@ -16,16 +26,14 @@ export function initCursor() {
   document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
-    cursor.style.left = `${mouseX}px`;
-    cursor.style.top = `${mouseY}px`;
+    cursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
   });
 
   // Smooth follower
   function animateFollower() {
     followerX += (mouseX - followerX) * 0.12;
     followerY += (mouseY - followerY) * 0.12;
-    follower.style.left = `${followerX}px`;
-    follower.style.top = `${followerY}px`;
+    follower.style.transform = `translate3d(${followerX}px, ${followerY}px, 0) translate(-50%, -50%)`;
     requestAnimationFrame(animateFollower);
   }
   animateFollower();

@@ -9,14 +9,41 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 export function initScrollAnimations() {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
+  const useLiteScrollEffects = prefersReducedMotion || isMobile;
+
   // --- Hero entrance ---
   const heroLines = document.querySelectorAll('.hero-title .line');
   const heroSub = document.querySelector('.hero-subtitle');
   const heroTag = document.querySelector('.hero-tagline');
   const scrollInd = document.querySelector('.scroll-indicator');
 
+  const typeLine = (line, text, speed = 44) => {
+    let index = 0;
+    line.classList.add('is-typing');
+    line.textContent = '';
+
+    const tick = () => {
+      index += 1;
+      line.textContent = text.slice(0, index);
+      if (index < text.length) {
+        window.setTimeout(tick, speed);
+      } else {
+        line.classList.remove('is-typing');
+      }
+    };
+
+    tick();
+  };
+
   // Set initial state BEFORE creating the timeline
   heroLines.forEach((line) => {
+    if (!prefersReducedMotion) {
+      line.dataset.fullText = line.textContent.trim();
+      line.style.setProperty('--typewriter-chars', `${line.dataset.fullText.length}`);
+      line.textContent = '';
+    }
     gsap.set(line, { rotateX: -45, transformPerspective: 800 });
   });
 
@@ -31,6 +58,11 @@ export function initScrollAnimations() {
         rotateX: 0,
         duration: 1.1,
         ease: 'power4.out',
+        onStart: () => {
+          if (!prefersReducedMotion && line.dataset.fullText) {
+            typeLine(line, line.dataset.fullText, 36 + i * 8);
+          }
+        },
       },
       i * 0.25
     );
@@ -79,60 +111,64 @@ export function initScrollAnimations() {
   const FOLD_DEPTH_PX   = -180;
   const FOLD_FADE       = 0.55;
 
-  gsap.utils.toArray('.section').forEach((section) => {
-    ScrollTrigger.create({
-      trigger: section,
-      start: 'top top',
-      end: 'bottom top',
-      scrub: 1.2,
-      onUpdate: (self) => {
-        const p = self.progress;
-        const eased = p * p;
-        const rotX    = eased * FOLD_EXIT_ROT;
-        const transZ  = eased * FOLD_DEPTH_PX;
-        const opacity = 1 - p * FOLD_FADE;
-        section.style.transform = `rotateX(${rotX}deg) translateZ(${transZ}px)`;
-        section.style.opacity   = opacity;
-      },
-      onLeaveBack: () => {
-        section.style.transform = 'rotateX(0deg) translateZ(0px)';
-        section.style.opacity   = 1;
-      },
-    });
+  if (!useLiteScrollEffects) {
+    gsap.utils.toArray('.section').forEach((section) => {
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: 1.2,
+        onUpdate: (self) => {
+          const p = self.progress;
+          const eased = p * p;
+          const rotX    = eased * FOLD_EXIT_ROT;
+          const transZ  = eased * FOLD_DEPTH_PX;
+          const opacity = 1 - p * FOLD_FADE;
+          section.style.transform = `rotateX(${rotX}deg) translateZ(${transZ}px)`;
+          section.style.opacity   = opacity;
+        },
+        onLeaveBack: () => {
+          section.style.transform = 'rotateX(0deg) translateZ(0px)';
+          section.style.opacity   = 1;
+        },
+      });
 
-    ScrollTrigger.create({
-      trigger: section,
-      start: 'top 110%',
-      end: 'top top',
-      scrub: 1,
-      onUpdate: (self) => {
-        if (self.direction === 1) {
-          const entryProgress = 1 - self.progress;
-          const eased = entryProgress * entryProgress;
-          const rotX  = -eased * 12;
-          section.style.transformOrigin = 'center bottom';
-          section.style.transform = `rotateX(${rotX}deg) translateZ(${-eased * 60}px)`;
-        }
-      },
-      onEnterBack: () => {
-        section.style.transformOrigin = 'center top';
-      },
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top 110%',
+        end: 'top top',
+        scrub: 1,
+        onUpdate: (self) => {
+          if (self.direction === 1) {
+            const entryProgress = 1 - self.progress;
+            const eased = entryProgress * entryProgress;
+            const rotX  = -eased * 12;
+            section.style.transformOrigin = 'center bottom';
+            section.style.transform = `rotateX(${rotX}deg) translateZ(${-eased * 60}px)`;
+          }
+        },
+        onEnterBack: () => {
+          section.style.transformOrigin = 'center top';
+        },
+      });
     });
-  });
+  }
 
   // --- Deep parallax on section content ─────────────────────────────
-  gsap.utils.toArray('.section-inner').forEach((inner) => {
-    gsap.to(inner, {
-      scrollTrigger: {
-        trigger: inner,
-        start: 'top bottom',
-        end: 'bottom top',
-        scrub: 1.5,
-      },
-      y: -60,
-      ease: 'none',
+  if (!useLiteScrollEffects) {
+    gsap.utils.toArray('.section-inner').forEach((inner) => {
+      gsap.to(inner, {
+        scrollTrigger: {
+          trigger: inner,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1.5,
+        },
+        y: -60,
+        ease: 'none',
+      });
     });
-  });
+  }
 
   // ── Hero-logo parallax (slower than content) ─────────────────────────
   const heroLogoBg = document.querySelector('.hero-logo-bg');
