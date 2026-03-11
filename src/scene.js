@@ -1,36 +1,103 @@
 /* ========================================
    Background 3D Scene – Award-Worthy
-   Scroll-driven rotating helix column with
-   bloom, STL logo, particle galaxy & orbital rings
+   Scroll-driven rotating glass pillar with
+   MeshPhysicalMaterial (transmission/IOR),
+   canvas text, bloom & particle galaxy
    ======================================== */
 
 import * as THREE from 'three';
-import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
+
+/* ── Canvas texture with SV text for the pillar surface ───────────── */
+function createPillarTexture() {
+  const cvs = document.createElement('canvas');
+  cvs.width  = 1024;
+  cvs.height = 2048;
+  const ctx  = cvs.getContext('2d');
+
+  /* background – very faint gradient so glass stays mostly clear */
+  const grad = ctx.createLinearGradient(0, 0, 0, 2048);
+  grad.addColorStop(0,   'rgba(255,255,255,0.02)');
+  grad.addColorStop(0.5, 'rgba(255,255,255,0.05)');
+  grad.addColorStop(1,   'rgba(255,255,255,0.02)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1024, 2048);
+
+  /* subtle horizontal rule lines */
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 9; i++) {
+    const ly = i * (2048 / 9);
+    ctx.beginPath();
+    ctx.moveTo(80, ly);
+    ctx.lineTo(944, ly);
+    ctx.stroke();
+  }
+
+  /* text layers */
+  const items = [
+    { text: 'SV FFM',            y:  220, size: 130, weight: '800', alpha: 0.88 },
+    { text: 'Waldorfschule',     y:  400, size:  68, weight: '600', alpha: 0.72 },
+    { text: 'Frankfurt',         y:  510, size:  68, weight: '600', alpha: 0.72 },
+    { text: '— — —',             y:  630, size:  42, weight: '400', alpha: 0.28 },
+    { text: 'Gemeinsam',         y:  800, size:  82, weight: '700', alpha: 0.82 },
+    { text: 'gestalten wir',     y:  930, size:  82, weight: '700', alpha: 0.82 },
+    { text: 'Schule.',           y: 1060, size:  82, weight: '700', alpha: 0.82 },
+    { text: '— — —',             y: 1170, size:  42, weight: '400', alpha: 0.28 },
+    { text: '2025 · 2026',       y: 1330, size:  60, weight: '500', alpha: 0.60 },
+    { text: 'Deine Stimme',      y: 1520, size:  80, weight: '700', alpha: 0.85 },
+    { text: 'zählt!',            y: 1650, size:  80, weight: '700', alpha: 0.85 },
+    { text: '→ Mitmachen',       y: 1840, size:  60, weight: '500', alpha: 0.60 },
+  ];
+
+  items.forEach(({ text, y, size, weight, alpha }) => {
+    ctx.font        = `${weight} ${size}px 'Arial', 'Helvetica Neue', sans-serif`;
+    ctx.fillStyle   = `rgba(255,255,255,${alpha})`;
+    ctx.textAlign   = 'center';
+    ctx.shadowColor = 'rgba(255,255,255,0.25)';
+    ctx.shadowBlur  = 14;
+    ctx.fillText(text, 512, y);
+  });
+
+  ctx.shadowBlur = 0;
+  return new THREE.CanvasTexture(cvs);
+}
 
 export function initScene() {
   const canvas = document.getElementById('scene-canvas');
   if (!canvas) return;
 
   /* ── Renderer ─────────────────────────────────────────────────────── */
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 1);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMapping        = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
 
   /* ── Scene & Camera ───────────────────────────────────────────────── */
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x000000, 0.008);
+  scene.background = new THREE.Color(0x000000);
 
   const camera = new THREE.PerspectiveCamera(
-    55, window.innerWidth / window.innerHeight, 0.1, 500
+    58, window.innerWidth / window.innerHeight, 0.1, 500
   );
-  camera.position.set(0, 8, 28);
+  camera.position.set(0, 0, 20);
+
+  /* ── Environment map (PMREM from RoomEnvironment) ─────────────────── */
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const roomEnv = new RoomEnvironment(renderer);
+  scene.environment = pmrem.fromScene(roomEnv, 0.04).texture;
+  pmrem.dispose();
+  roomEnv.dispose();
 
   /* ── Post-Processing (Bloom) ──────────────────────────────────────── */
   const composer = new EffectComposer(renderer);
@@ -38,248 +105,189 @@ export function initScene() {
 
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.7,   // strength
-    0.35,  // radius
-    0.82   // threshold
+    0.45, // strength
+    0.30, // radius
+    0.88  // threshold
   );
   composer.addPass(bloomPass);
   composer.addPass(new OutputPass());
 
   /* ── Lights ───────────────────────────────────────────────────────── */
-  scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 
-  const keyLight = new THREE.PointLight(0xffffff, 4, 160);
-  keyLight.position.set(12, 22, 22);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 3.0);
+  keyLight.position.set(8, 14, 14);
   scene.add(keyLight);
 
-  const rimLight = new THREE.PointLight(0xccccff, 2.5, 100);
-  rimLight.position.set(-15, -10, 15);
+  /* warm fill from the right */
+  const fillLight = new THREE.PointLight(0xfff0e0, 2.5, 80);
+  fillLight.position.set(10, 6, 10);
+  scene.add(fillLight);
+
+  /* cool rim from the left-back */
+  const rimLight = new THREE.PointLight(0xaaccff, 2.0, 80);
+  rimLight.position.set(-10, -4, -8);
   scene.add(rimLight);
 
-  const bottomLight = new THREE.PointLight(0xffeedd, 2, 90);
-  bottomLight.position.set(0, -30, 10);
+  /* bottom accent */
+  const bottomLight = new THREE.PointLight(0xffffff, 1.2, 60);
+  bottomLight.position.set(0, -24, 6);
   scene.add(bottomLight);
 
-  /* ── Central Column (helix of geometric shapes) ───────────────────── */
-  const columnGroup = new THREE.Group();
-  scene.add(columnGroup);
+  /* ── Glass Pillar group ───────────────────────────────────────────── */
+  const pillarGroup = new THREE.Group();
+  scene.add(pillarGroup);
 
-  const COLUMN_HEIGHT    = 80;
-  const COLUMN_RADIUS    = 4.5;
-  const TURNS            = 6;
-  const SHAPES_PER_TURN  = 10;
-  const TOTAL_SHAPES     = TURNS * SHAPES_PER_TURN;
+  const PILLAR_RADIUS = 3.2;
+  const PILLAR_HEIGHT = 32;
 
-  const geos = [
-    new THREE.IcosahedronGeometry(0.45, 0),
-    new THREE.OctahedronGeometry(0.5, 0),
-    new THREE.TetrahedronGeometry(0.55, 0),
-    new THREE.DodecahedronGeometry(0.4, 0),
-    new THREE.BoxGeometry(0.5, 0.5, 0.5),
-    new THREE.TorusGeometry(0.32, 0.12, 8, 24),
-  ];
-
-  const columnMeshes = [];
-
-  for (let i = 0; i < TOTAL_SHAPES; i++) {
-    const t     = i / TOTAL_SHAPES;
-    const angle = t * TURNS * Math.PI * 2;
-    const y     = (t - 0.5) * COLUMN_HEIGHT;
-    const r     = COLUMN_RADIUS + (Math.random() - 0.5) * 1.2;
-    const x     = Math.cos(angle) * r;
-    const z     = Math.sin(angle) * r;
-
-    const geo    = geos[i % geos.length];
-    const isGlow = i % 6 === 0;
-
-    const mat = isGlow
-      ? new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          transparent: true,
-          opacity: 0.55,
-        })
-      : new THREE.MeshStandardMaterial({
-          color: new THREE.Color().setHSL(0, 0, 0.7 + Math.random() * 0.3),
-          metalness: 0.78 + Math.random() * 0.2,
-          roughness: 0.06 + Math.random() * 0.14,
-        });
-
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(x, y, z);
-
-    const s = 0.5 + Math.random() * 0.9;
-    mesh.scale.set(s, s, s);
-
-    mesh.userData = {
-      baseAngle: angle,
-      baseY: y,
-      radius: r,
-      rotSpeed: 0.004 + Math.random() * 0.008,
-      floatPhase: Math.random() * Math.PI * 2,
-    };
-
-    columnGroup.add(mesh);
-    columnMeshes.push(mesh);
-  }
-
-  /* ── Wireframe spine (central glowing cylinder) ───────────────────── */
-  const spineGeo = new THREE.CylinderGeometry(0.25, 0.25, COLUMN_HEIGHT, 6, 50);
-  const spineMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff, wireframe: true, transparent: true, opacity: 0.05,
+  /* outer transparent glass shell (open-ended so inside is visible) */
+  const outerGeo = new THREE.CylinderGeometry(
+    PILLAR_RADIUS, PILLAR_RADIUS, PILLAR_HEIGHT, 80, 1, true
+  );
+  const pillarTexture = createPillarTexture();
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color:                0xffffff,
+    metalness:            0.0,
+    roughness:            0.06,
+    transmission:         0.92,   /* near-complete glass transparency */
+    thickness:            2.5,    /* simulated glass thickness */
+    ior:                  1.52,   /* standard heavy glass IOR  */
+    clearcoat:            1.0,
+    clearcoatRoughness:   0.04,
+    envMapIntensity:      1.6,
+    transparent:          true,
+    side:                 THREE.DoubleSide,
+    map:                  pillarTexture,
   });
-  columnGroup.add(new THREE.Mesh(spineGeo, spineMat));
+  const outerCylinder = new THREE.Mesh(outerGeo, glassMat);
+  pillarGroup.add(outerCylinder);
 
-  /* ── Horizontal ring markers ──────────────────────────────────────── */
-  for (let i = 0; i < 10; i++) {
-    const ry   = ((i / 9) - 0.5) * COLUMN_HEIGHT;
-    const rGeo = new THREE.TorusGeometry(COLUMN_RADIUS + 1.2, 0.018, 8, 80);
+  /* top & bottom glass caps */
+  const capMat = new THREE.MeshPhysicalMaterial({
+    color:              0xffffff,
+    metalness:          0.0,
+    roughness:          0.03,
+    transmission:       0.96,
+    thickness:          0.2,
+    ior:                1.52,
+    clearcoat:          1.0,
+    envMapIntensity:    1.6,
+    transparent:        true,
+  });
+  const capGeo = new THREE.CircleGeometry(PILLAR_RADIUS, 80);
+
+  const topCap = new THREE.Mesh(capGeo, capMat);
+  topCap.position.y  =  PILLAR_HEIGHT / 2;
+  topCap.rotation.x  = -Math.PI / 2;
+  pillarGroup.add(topCap);
+
+  const bottomCap = new THREE.Mesh(capGeo, capMat);
+  bottomCap.position.y =  -PILLAR_HEIGHT / 2;
+  bottomCap.rotation.x  =  Math.PI / 2;
+  pillarGroup.add(bottomCap);
+
+  /* inner frosted acrylic core – gives the cloudy glass-depth look */
+  const innerGeo = new THREE.CylinderGeometry(
+    PILLAR_RADIUS - 0.55, PILLAR_RADIUS - 0.55, PILLAR_HEIGHT - 0.1, 64, 1, false
+  );
+  const acrylicMat = new THREE.MeshPhysicalMaterial({
+    color:            0xfbfbff,
+    metalness:        0.0,
+    roughness:        0.30,
+    transmission:     0.70,
+    thickness:        1.8,
+    ior:              1.45,
+    clearcoat:        0.4,
+    clearcoatRoughness: 0.18,
+    envMapIntensity:  0.9,
+    transparent:      true,
+    opacity:          0.55,
+  });
+  pillarGroup.add(new THREE.Mesh(innerGeo, acrylicMat));
+
+  /* horizontal edge glow rings */
+  const ringYs = [-14, -8, -2, 4, 10];
+  ringYs.forEach((ry) => {
+    const rGeo = new THREE.TorusGeometry(PILLAR_RADIUS + 0.04, 0.022, 14, 80);
     const rMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff, transparent: true, opacity: 0.07,
+      color: 0xffffff, transparent: true, opacity: 0.30,
     });
     const ring = new THREE.Mesh(rGeo, rMat);
     ring.position.y = ry;
     ring.rotation.x = Math.PI / 2;
-    columnGroup.add(ring);
-  }
-
-  /* ── Connecting lines between nearby helix shapes ─────────────────── */
-  const lineMat = new THREE.LineBasicMaterial({
-    color: 0xffffff, transparent: true, opacity: 0.04,
+    pillarGroup.add(ring);
   });
-  for (let i = 0; i < columnMeshes.length - 1; i++) {
-    const a = columnMeshes[i].position;
-    const b = columnMeshes[i + 1].position;
-    const lineGeo = new THREE.BufferGeometry().setFromPoints([a, b]);
-    columnGroup.add(new THREE.Line(lineGeo, lineMat));
-  }
 
-  /* ── STL Logo – centred in the helix ──────────────────────────────── */
-  const stlLoader = new STLLoader();
-  let logoMesh = null;
-  let logoGlow = null;
+  /* top & bottom edge bright rings (highlight) */
+  [-PILLAR_HEIGHT / 2, PILLAR_HEIGHT / 2].forEach((ry) => {
+    const rGeo = new THREE.TorusGeometry(PILLAR_RADIUS + 0.05, 0.04, 14, 80);
+    const rMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.55,
+    });
+    const ring = new THREE.Mesh(rGeo, rMat);
+    ring.position.y = ry;
+    ring.rotation.x = Math.PI / 2;
+    pillarGroup.add(ring);
+  });
 
-  stlLoader.load(
-    /* Vite resolves publicDir paths from root */
-    import.meta.env.BASE_URL + 'assets/sv-logo.stl',
-    (geometry) => {
-      geometry.center();
-      geometry.computeVertexNormals();
-
-      const bbox = new THREE.Box3().setFromBufferAttribute(
-        geometry.attributes.position
-      );
-      const size   = new THREE.Vector3();
-      bbox.getSize(size);
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const sc     = 7 / maxDim;
-
-      /* Solid metallic logo */
-      const logoMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff, metalness: 0.92, roughness: 0.08,
-      });
-      logoMesh = new THREE.Mesh(geometry, logoMat);
-      logoMesh.scale.set(sc, sc, sc);
-      columnGroup.add(logoMesh);
-
-      /* Glow duplicate (bloom picks this up) */
-      const glowMat = new THREE.MeshBasicMaterial({
-        color: 0xffffff, transparent: true, opacity: 0.12,
-      });
-      logoGlow = new THREE.Mesh(geometry, glowMat);
-      logoGlow.scale.set(sc * 1.06, sc * 1.06, sc * 1.06);
-      columnGroup.add(logoGlow);
-    }
-  );
-
-  /* ── Particle galaxy (cylindrical cloud) ──────────────────────────── */
-  const PARTICLE_COUNT = 2500;
-  const pPos    = new Float32Array(PARTICLE_COUNT * 3);
-
+  /* ── Particle galaxy (cylindrical cloud behind pillar) ────────────── */
+  const PARTICLE_COUNT = 2200;
+  const pPos = new Float32Array(PARTICLE_COUNT * 3);
   for (let i = 0; i < PARTICLE_COUNT; i++) {
     const a = Math.random() * Math.PI * 2;
-    const r = 6 + Math.random() * 50;
-    const y = (Math.random() - 0.5) * 140;
+    const r = 8 + Math.random() * 48;
+    const y = (Math.random() - 0.5) * 130;
     pPos[i * 3]     = Math.cos(a) * r;
     pPos[i * 3 + 1] = y;
     pPos[i * 3 + 2] = Math.sin(a) * r;
   }
-
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-
   const pMat = new THREE.PointsMaterial({
-    color: 0xffffff, size: 0.14, sizeAttenuation: true,
-    transparent: true, opacity: 0.45,
+    color: 0xffffff, size: 0.11, sizeAttenuation: true,
+    transparent: true, opacity: 0.38,
   });
   const particles = new THREE.Points(pGeo, pMat);
   scene.add(particles);
 
-  /* ── Orbital particle rings ───────────────────────────────────────── */
+  /* ── Orbital particle rings (depth layers) ────────────────────────── */
   const orbRings = [];
-  for (let ri = 0; ri < 5; ri++) {
-    const rad  = 9 + ri * 6;
-    const cnt  = 180 + ri * 40;
-    const rPos = new Float32Array(cnt * 3);
-
+  for (let ri = 0; ri < 4; ri++) {
+    const rad = 12 + ri * 7;
+    const cnt = 160 + ri * 40;
+    const pos = new Float32Array(cnt * 3);
     for (let j = 0; j < cnt; j++) {
       const a = (j / cnt) * Math.PI * 2;
-      rPos[j * 3]     = Math.cos(a) * rad + (Math.random() - 0.5) * 0.6;
-      rPos[j * 3 + 1] = (Math.random() - 0.5) * 1.5;
-      rPos[j * 3 + 2] = Math.sin(a) * rad + (Math.random() - 0.5) * 0.6;
+      pos[j * 3]     = Math.cos(a) * rad + (Math.random() - 0.5) * 0.5;
+      pos[j * 3 + 1] = (Math.random() - 0.5) * 1.8;
+      pos[j * 3 + 2] = Math.sin(a) * rad + (Math.random() - 0.5) * 0.5;
     }
-
-    const rGeo = new THREE.BufferGeometry();
-    rGeo.setAttribute('position', new THREE.BufferAttribute(rPos, 3));
-    const rMat = new THREE.PointsMaterial({
-      color: 0xffffff, size: 0.07, sizeAttenuation: true,
-      transparent: true, opacity: 0.28 - ri * 0.04,
+    const orGeo = new THREE.BufferGeometry();
+    orGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const orMat = new THREE.PointsMaterial({
+      color: 0xffffff, size: 0.06, sizeAttenuation: true,
+      transparent: true, opacity: 0.22 - ri * 0.04,
     });
-    const ring = new THREE.Points(rGeo, rMat);
-    ring.userData = { speed: 0.08 + Math.random() * 0.15 };
-    ring.rotation.x = (Math.random() - 0.5) * 0.35;
+    const ring = new THREE.Points(orGeo, orMat);
+    ring.userData.speed = 0.06 + Math.random() * 0.12;
+    ring.rotation.x     = (Math.random() - 0.5) * 0.3;
     scene.add(ring);
     orbRings.push(ring);
   }
 
-  /* ── Floating accent meshes (far field) ───────────────────────────── */
-  const farShapes = [];
-  for (let i = 0; i < 14; i++) {
-    const geo   = geos[i % geos.length];
-    const isW   = i % 3 === 0;
-    const mat   = isW
-      ? new THREE.MeshBasicMaterial({
-          color: 0xffffff, wireframe: true, transparent: true, opacity: 0.12,
-        })
-      : new THREE.MeshStandardMaterial({
-          color: new THREE.Color().setHSL(0, 0, 0.75 + Math.random() * 0.2),
-          metalness: 0.8, roughness: 0.1,
-        });
+  /* ── GSAP ScrollTrigger – silky scroll-driven pillar rotation ─────── */
+  const pillarAnim = { y: 0 };
 
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(
-      (Math.random() - 0.5) * 60,
-      (Math.random() - 0.5) * 50,
-      -8 - Math.random() * 30
-    );
-    const fs = 0.4 + Math.random() * 1.2;
-    mesh.scale.set(fs, fs, fs);
-    mesh.userData = {
-      rotSpeed:   0.002 + Math.random() * 0.006,
-      floatSpeed: 0.15 + Math.random() * 0.4,
-      floatAmp:   0.2 + Math.random() * 0.5,
-      baseY:      mesh.position.y,
-    };
-    scene.add(mesh);
-    farShapes.push(mesh);
-  }
-
-  /* ── Scroll tracking ──────────────────────────────────────────────── */
-  let scrollProgress       = 0;
-  let targetScrollProgress = 0;
-
-  window.addEventListener('scroll', () => {
-    const maxScroll = document.body.scrollHeight - window.innerHeight;
-    targetScrollProgress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+  gsap.to(pillarAnim, {
+    y: Math.PI * 6, /* 3 full rotations across the whole page */
+    ease: 'none',
+    scrollTrigger: {
+      trigger:  document.documentElement,
+      start:    'top top',
+      end:      'bottom bottom',
+      scrub:    2.0, /* seconds of lag = silky easing */
+    },
   });
 
   /* ── Mouse parallax ──────────────────────────────────────────────── */
@@ -289,8 +297,8 @@ export function initScene() {
   document.addEventListener('mousemove', (e) => {
     const mx = (e.clientX / window.innerWidth  - 0.5) * 2;
     const my = (e.clientY / window.innerHeight - 0.5) * 2;
-    targetCamX =  mx * 4;
-    targetCamY = -my * 3;
+    targetCamX =  mx * 2.8;
+    targetCamY = -my * 1.8;
   });
 
   /* ── Resize ───────────────────────────────────────────────────────── */
@@ -299,6 +307,7 @@ export function initScene() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
     composer.setSize(window.innerWidth, window.innerHeight);
+    bloomPass.resolution.set(window.innerWidth, window.innerHeight);
   });
 
   /* ── Animation loop ───────────────────────────────────────────────── */
@@ -308,67 +317,31 @@ export function initScene() {
     requestAnimationFrame(animate);
     const elapsed = clock.getElapsedTime();
 
-    /* Smooth scroll easing */
-    scrollProgress += (targetScrollProgress - scrollProgress) * 0.045;
+    /* scroll-driven rotation from GSAP + subtle idle drift */
+    pillarGroup.rotation.y = pillarAnim.y + elapsed * 0.04;
 
-    /* ── Column rotation & vertical travel ── */
-    columnGroup.rotation.y = scrollProgress * Math.PI * 4 + elapsed * 0.08;
-    columnGroup.position.y = -scrollProgress * 18 + 4;
+    /* gentle vertical bob */
+    pillarGroup.position.y = Math.sin(elapsed * 0.22) * 0.35;
 
-    /* ── Per-shape micro-animations ── */
-    columnMeshes.forEach((m) => {
-      const { rotSpeed, floatPhase, baseY } = m.userData;
-      m.rotation.x += rotSpeed;
-      m.rotation.z += rotSpeed * 0.6;
-      m.position.y = baseY + Math.sin(elapsed * 0.7 + floatPhase) * 0.18;
-    });
+    /* camera mouse parallax */
+    camera.position.x += (targetCamX - camera.position.x) * 0.016;
+    camera.position.y += (targetCamY - camera.position.y) * 0.016;
+    camera.lookAt(0, 0, 0);
 
-    /* ── Logo rotation ── */
-    if (logoMesh) {
-      logoMesh.rotation.y = elapsed * 0.25;
-      logoMesh.rotation.x = Math.sin(elapsed * 0.18) * 0.12;
-      if (logoGlow) {
-        logoGlow.rotation.copy(logoMesh.rotation);
-        logoGlow.position.copy(logoMesh.position);
-      }
-    }
+    /* particle cloud slow drift */
+    particles.rotation.y = elapsed * 0.010;
 
-    /* ── Particle cloud ── */
-    particles.rotation.y = elapsed * 0.015 + scrollProgress * 1.2;
-
-    /* ── Orbital rings ── */
+    /* orbital rings */
     orbRings.forEach((ring) => {
-      ring.rotation.y += ring.userData.speed * 0.004;
-      ring.rotation.z  = Math.sin(elapsed * 0.08 + ring.userData.speed) * 0.06;
+      ring.rotation.y += ring.userData.speed * 0.003;
     });
 
-    /* ── Far-field accent shapes ── */
-    farShapes.forEach((m) => {
-      const { rotSpeed, floatSpeed, floatAmp, baseY } = m.userData;
-      m.rotation.x += rotSpeed * 0.8 + scrollProgress * 0.008;
-      m.rotation.y += rotSpeed * 1.2;
-      m.position.y  = baseY + Math.sin(elapsed * floatSpeed) * floatAmp;
-    });
-
-    /* ── Camera journey ── */
-    const camZ = 28 - scrollProgress * 12;
-    const camY = 8  - scrollProgress * 10;
-    camera.position.z += (camZ - camera.position.z) * 0.035;
-    camera.position.y += (camY - camera.position.y) * 0.035;
-    camera.position.x += (targetCamX - camera.position.x) * 0.018;
-    camera.position.y += (targetCamY * 0.4 - camera.position.y * 0.4) * 0.018;
-
-    camera.lookAt(0, columnGroup.position.y + 2, 0);
-
-    /* ── Dynamic lights ── */
-    const la = elapsed * 0.2;
-    keyLight.position.x = Math.cos(la) * 16;
-    keyLight.position.z = 22 + Math.sin(la) * 9;
-    rimLight.position.x = Math.cos(la + Math.PI) * 13;
-    rimLight.position.y = Math.sin(la * 0.5) * 12;
-
-    /* ── Bloom ramps with scroll ── */
-    bloomPass.strength = 0.55 + scrollProgress * 0.65;
+    /* dynamic lights orbit around pillar */
+    const la = elapsed * 0.18;
+    fillLight.position.x  =  Math.cos(la) * 12;
+    fillLight.position.z  =  10 + Math.sin(la) * 7;
+    rimLight.position.x   =  Math.cos(la + Math.PI) * 12;
+    rimLight.position.z   = -8 + Math.sin(la * 0.7) * 5;
 
     composer.render();
   }
