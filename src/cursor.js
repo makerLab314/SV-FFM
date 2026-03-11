@@ -31,7 +31,7 @@ export function initCursor() {
   animateFollower();
 
   // Hover effect on interactive elements
-  const interactiveSelectors = 'a, button, .about-card, .project-item, .contact-btn, .team-member';
+  const interactiveSelectors = 'a, button, .about-card, .project-item, .contact-btn, .struktur-card, .vernetzung-card, .archiv-btn, #logo-canvas';
   document.querySelectorAll(interactiveSelectors).forEach((el) => {
     el.addEventListener('mouseenter', () => {
       cursor.classList.add('hover');

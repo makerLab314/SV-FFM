@@ -42,20 +42,20 @@ function createPillarTexture() {
     ctx.stroke();
   }
 
-  /* text layers */
+  /* text layers – real SV content */
   const items = [
     { text: 'SV FFM',            y:  220, size: 130, weight: '800', alpha: 0.88 },
     { text: 'Waldorfschule',     y:  400, size:  68, weight: '600', alpha: 0.72 },
     { text: 'Frankfurt',         y:  510, size:  68, weight: '600', alpha: 0.72 },
     { text: '— — —',             y:  630, size:  42, weight: '400', alpha: 0.28 },
-    { text: 'Gemeinsam',         y:  800, size:  82, weight: '700', alpha: 0.82 },
-    { text: 'gestalten wir',     y:  930, size:  82, weight: '700', alpha: 0.82 },
-    { text: 'Schule.',           y: 1060, size:  82, weight: '700', alpha: 0.82 },
+    { text: 'Demokratie',        y:  800, size:  82, weight: '700', alpha: 0.82 },
+    { text: 'leben.',            y:  930, size:  82, weight: '700', alpha: 0.82 },
+    { text: 'Seit 1947.',        y: 1060, size:  68, weight: '600', alpha: 0.68 },
     { text: '— — —',             y: 1170, size:  42, weight: '400', alpha: 0.28 },
-    { text: '2025 · 2026',       y: 1330, size:  60, weight: '500', alpha: 0.60 },
-    { text: 'Deine Stimme',      y: 1520, size:  80, weight: '700', alpha: 0.85 },
-    { text: 'zählt!',            y: 1650, size:  80, weight: '700', alpha: 0.85 },
-    { text: '→ Mitmachen',       y: 1840, size:  60, weight: '500', alpha: 0.60 },
+    { text: 'Selbstverwaltung',  y: 1330, size:  60, weight: '500', alpha: 0.60 },
+    { text: 'Partizipation',     y: 1460, size:  60, weight: '500', alpha: 0.60 },
+    { text: 'Mitgestaltung',     y: 1590, size:  60, weight: '500', alpha: 0.60 },
+    { text: '825 Schüler:innen', y: 1780, size:  56, weight: '600', alpha: 0.65 },
   ];
 
   items.forEach(({ text, y, size, weight, alpha }) => {
