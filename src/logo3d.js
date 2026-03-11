@@ -43,7 +43,7 @@ export function initLogo3D() {
   const loader = new STLLoader();
   let logoMesh = null;
 
-  loader.load('/assets/sv-logo.stl', (geometry) => {
+  loader.load(import.meta.env.BASE_URL + 'assets/sv-logo.stl', (geometry) => {
     geometry.center();
     geometry.computeVertexNormals();
 
