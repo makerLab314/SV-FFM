@@ -64,11 +64,11 @@ export function initScene() {
   const columnGroup = new THREE.Group();
   scene.add(columnGroup);
 
-  const COL_H   = 80;           // total height of the helix
-  const COL_R   = 4.5;          // base radius
-  const TURNS   = 6;            // number of helix revolutions
-  const PER_T   = 10;           // shapes per turn
-  const TOTAL_S = TURNS * PER_T;
+  const COLUMN_HEIGHT    = 80;
+  const COLUMN_RADIUS    = 4.5;
+  const TURNS            = 6;
+  const SHAPES_PER_TURN  = 10;
+  const TOTAL_SHAPES     = TURNS * SHAPES_PER_TURN;
 
   const geos = [
     new THREE.IcosahedronGeometry(0.45, 0),
@@ -81,11 +81,11 @@ export function initScene() {
 
   const columnMeshes = [];
 
-  for (let i = 0; i < TOTAL_S; i++) {
-    const t     = i / TOTAL_S;
+  for (let i = 0; i < TOTAL_SHAPES; i++) {
+    const t     = i / TOTAL_SHAPES;
     const angle = t * TURNS * Math.PI * 2;
-    const y     = (t - 0.5) * COL_H;
-    const r     = COL_R + (Math.random() - 0.5) * 1.2;
+    const y     = (t - 0.5) * COLUMN_HEIGHT;
+    const r     = COLUMN_RADIUS + (Math.random() - 0.5) * 1.2;
     const x     = Math.cos(angle) * r;
     const z     = Math.sin(angle) * r;
 
@@ -123,7 +123,7 @@ export function initScene() {
   }
 
   /* ── Wireframe spine (central glowing cylinder) ───────────────────── */
-  const spineGeo = new THREE.CylinderGeometry(0.25, 0.25, COL_H, 6, 50);
+  const spineGeo = new THREE.CylinderGeometry(0.25, 0.25, COLUMN_HEIGHT, 6, 50);
   const spineMat = new THREE.MeshBasicMaterial({
     color: 0xffffff, wireframe: true, transparent: true, opacity: 0.05,
   });
@@ -131,8 +131,8 @@ export function initScene() {
 
   /* ── Horizontal ring markers ──────────────────────────────────────── */
   for (let i = 0; i < 10; i++) {
-    const ry   = ((i / 9) - 0.5) * COL_H;
-    const rGeo = new THREE.TorusGeometry(COL_R + 1.2, 0.018, 8, 80);
+    const ry   = ((i / 9) - 0.5) * COLUMN_HEIGHT;
+    const rGeo = new THREE.TorusGeometry(COLUMN_RADIUS + 1.2, 0.018, 8, 80);
     const rMat = new THREE.MeshBasicMaterial({
       color: 0xffffff, transparent: true, opacity: 0.07,
     });
@@ -192,10 +192,10 @@ export function initScene() {
   );
 
   /* ── Particle galaxy (cylindrical cloud) ──────────────────────────── */
-  const P_COUNT = 2500;
-  const pPos    = new Float32Array(P_COUNT * 3);
+  const PARTICLE_COUNT = 2500;
+  const pPos    = new Float32Array(PARTICLE_COUNT * 3);
 
-  for (let i = 0; i < P_COUNT; i++) {
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
     const a = Math.random() * Math.PI * 2;
     const r = 6 + Math.random() * 50;
     const y = (Math.random() - 0.5) * 140;
@@ -356,7 +356,7 @@ export function initScene() {
     camera.position.z += (camZ - camera.position.z) * 0.035;
     camera.position.y += (camY - camera.position.y) * 0.035;
     camera.position.x += (targetCamX - camera.position.x) * 0.018;
-    camera.position.y += (targetCamY * 0.4 - camera.position.y * 0.01);
+    camera.position.y += (targetCamY * 0.4 - camera.position.y * 0.4) * 0.018;
 
     camera.lookAt(0, columnGroup.position.y + 2, 0);
 
