@@ -76,24 +76,25 @@ export function initScene() {
      PARTICLE HELIX – dense double-strand spiral spanning full page
      ══════════════════════════════════════════════════════════════════ */
   const helixGroup = new THREE.Group();
-  /* push helix further back in Z so it reads as a pure background element */
-  helixGroup.position.z = -6;
+  /* push helix far back in Z so it reads as a pure background element */
+  helixGroup.position.z = -14;
+  helixGroup.renderOrder = -1;
   scene.add(helixGroup);
 
   const HELIX_RADIUS     = 4.0;
   const HELIX_HEIGHT     = 110;       // taller to cover full scroll
   const HELIX_TURNS      = 11;        // more turns → denser packing
-  const HELIX_PARTICLES  = useLiteScene ? 10000 : 22000;
+  const HELIX_PARTICLES  = useLiteScene ? 6000 : 14000;
   const HELIX_STRANDS    = 2;
 
   /* physics constants for particle drift interaction */
-  const SPRING_K_MAX   = 0.028;   // full spring-back strength (when idle, no interaction)
-  const SPRING_K_MIN   = 0.002;   // near-zero spring during active touch (binding lost)
-  const DAMPING        = 0.94;    // damping – keeps drift slow and gentle
-  const REPULSE_K      = 0.10;    // repulsion impulse strength (gentle scatter)
-  const REPULSE_R_NDC  = 0.18;    // influence radius in NDC screen space
-  const REPULSE_Y_FACTOR = 0.30;  // attenuate vertical scatter to preserve helix silhouette
-  const INTERACTION_LINGER_S = 4.0; // seconds to keep spring loop running after last interaction
+  const SPRING_K_MAX   = 0.022;   // full spring-back strength (when idle, no interaction)
+  const SPRING_K_MIN   = 0.003;   // near-zero spring during active touch (binding lost)
+  const DAMPING        = 0.96;    // damping – keeps drift slow and gentle
+  const REPULSE_K      = 0.06;    // repulsion impulse strength (gentle scatter)
+  const REPULSE_R_NDC  = 0.22;    // influence radius in NDC screen space
+  const REPULSE_Y_FACTOR = 0.25;  // attenuate vertical scatter to preserve helix silhouette
+  const INTERACTION_LINGER_S = 5.0; // seconds to keep spring loop running after last interaction
 
   const helixPositions     = new Float32Array(HELIX_PARTICLES * 3);
   const helixBasePositions = new Float32Array(HELIX_PARTICLES * 3); // rigid helix targets
@@ -133,7 +134,7 @@ export function initScene() {
     helixColors[i * 3 + 1] = c.g;
     helixColors[i * 3 + 2] = c.b;
 
-    helixSizes[i] = 0.18 + Math.random() * 0.14;
+    helixSizes[i] = 0.35 + Math.random() * 0.25;
 
     /* pre-baked random Y-drift direction used during mouse repulsion */
     helixRandY[i] = (Math.random() - 0.5) * 2.0;
@@ -151,7 +152,7 @@ export function initScene() {
   const helixClipPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 10);
 
   const helixMat = new THREE.PointsMaterial({
-    size: 0.38,             // larger → clearly visible dense particles
+    size: 0.7,              // larger → clearly visible dense particles
     sizeAttenuation: true,
     vertexColors: true,
     transparent: true,
@@ -161,6 +162,7 @@ export function initScene() {
     clippingPlanes: [helixClipPlane],
   });
   const helixPoints = new THREE.Points(helixGeo, helixMat);
+  helixPoints.renderOrder = -1;
   helixGroup.add(helixPoints);
 
   /* ── Solid line strands and cross-rungs removed: the helix is now
