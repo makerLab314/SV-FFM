@@ -1,5 +1,5 @@
 /* ========================================
-   Custom Cursor  –  snappy + dev-grid aura
+   Custom Cursor – snappy + dev-grid aura
    ======================================== */
 
 export function initCursor() {
