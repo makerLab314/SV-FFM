@@ -209,7 +209,7 @@ a {
   padding: 120px 40px 80px;
   transform-style: preserve-3d;
   transform-origin: center top;
-  background: rgba(0,0,0,0.62);
+  background: rgba(0,0,0,0.38);
 }
 
 .section-inner {
@@ -409,7 +409,7 @@ a {
 /* ═══════════════════════════════════════════
    About Section — skeuomorphic cards
    ═══════════════════════════════════════════ */
-.about-section { background: rgba(0,0,0,0.6); }
+.about-section { background: rgba(0,0,0,0.32); }
 
 .about-grid {
   display: grid;
@@ -427,13 +427,10 @@ a {
   transition: transform 0.45s ease, box-shadow 0.45s ease, border-color 0.3s ease;
   will-change: transform, box-shadow;
 
-  background: linear-gradient(
-    160deg,
-    #141414 0%,
-    #0c0c0c 40%,
-    #080808 100%
-  );
-  border: 1px solid var(--border);
+  background: rgba(14, 14, 14, 0.55);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.10);
   box-shadow: var(--shadow-card);
 }
 
@@ -491,7 +488,7 @@ a {
 /* ═══════════════════════════════════════════
    Struktur Section — role cards
    ═══════════════════════════════════════════ */
-.struktur-section { background: rgba(0,0,0,0.65); }
+.struktur-section { background: rgba(0,0,0,0.36); }
 
 .struktur-grid {
   display: grid;
@@ -503,13 +500,10 @@ a {
   position: relative;
   padding: 36px 30px;
   border-radius: 18px;
-  background: linear-gradient(
-    160deg,
-    #121212 0%,
-    #0a0a0a 60%,
-    #080808 100%
-  );
-  border: 1px solid var(--border);
+  background: rgba(12, 12, 12, 0.55);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.09);
   box-shadow: var(--shadow-card);
   opacity: 0;
   transform: translateY(40px);
@@ -555,7 +549,7 @@ a {
 /* ═══════════════════════════════════════════
    Projects Section
    ═══════════════════════════════════════════ */
-.projects-section { background: rgba(0,0,0,0.6); }
+.projects-section { background: rgba(0,0,0,0.32); }
 
 .projects-list {
   display: flex;
@@ -621,7 +615,7 @@ a {
 /* ═══════════════════════════════════════════
    Vernetzung Section
    ═══════════════════════════════════════════ */
-.vernetzung-section { background: rgba(0,0,0,0.65); }
+.vernetzung-section { background: rgba(0,0,0,0.36); }
 
 .vernetzung-grid {
   display: grid;
@@ -633,13 +627,10 @@ a {
   position: relative;
   padding: 44px 36px;
   border-radius: 22px;
-  background: linear-gradient(
-    160deg,
-    #141414 0%,
-    #0c0c0c 40%,
-    #080808 100%
-  );
-  border: 1px solid var(--border);
+  background: rgba(14, 14, 14, 0.55);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.10);
   box-shadow: var(--shadow-card);
   opacity: 0;
   transform: translateY(40px);
@@ -694,7 +685,7 @@ a {
 /* ═══════════════════════════════════════════
    Archiv Section
    ═══════════════════════════════════════════ */
-.archiv-section { background: rgba(0,0,0,0.55); }
+.archiv-section { background: rgba(0,0,0,0.30); }
 
 .archiv-content {
   display: flex;
@@ -786,7 +777,7 @@ a {
 /* ═══════════════════════════════════════════
    Contact Section
    ═══════════════════════════════════════════ */
-.contact-section { background: rgba(0,0,0,0.7); }
+.contact-section { background: rgba(0,0,0,0.42); }
 
 .contact-content {
   text-align: center;

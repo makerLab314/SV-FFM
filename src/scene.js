@@ -31,7 +31,7 @@ export function initScene() {
   /* ── Scene & Camera ───────────────────────────────────────────────── */
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x000000);
-  scene.fog = new THREE.FogExp2(0x000000, 0.012);
+  scene.fog = new THREE.FogExp2(0x000000, 0.010);
 
   const camera = new THREE.PerspectiveCamera(
     58, window.innerWidth / window.innerHeight, 0.1, 500
@@ -71,23 +71,34 @@ export function initScene() {
   scene.add(rimLight);
 
   /* ══════════════════════════════════════════════════════════════════
-     PARTICLE HELIX – spirals from top to bottom of the scene
+     PARTICLE HELIX – dense double-strand spiral spanning full page
      ══════════════════════════════════════════════════════════════════ */
   const helixGroup = new THREE.Group();
   scene.add(helixGroup);
 
   const HELIX_RADIUS     = 4.0;
-  const HELIX_HEIGHT     = 80;
-  const HELIX_TURNS      = 8;
-  const HELIX_PARTICLES  = useLiteScene ? 2400 : 5000;
+  const HELIX_HEIGHT     = 110;       // taller to cover full scroll
+  const HELIX_TURNS      = 11;        // more turns → denser packing
+  const HELIX_PARTICLES  = useLiteScene ? 10000 : 22000;
   const HELIX_STRANDS    = 2;
 
-  const helixPositions = new Float32Array(HELIX_PARTICLES * 3);
-  const helixColors    = new Float32Array(HELIX_PARTICLES * 3);
-  const helixSizes     = new Float32Array(HELIX_PARTICLES);
+  /* physics constants for particle drift interaction */
+  const SPRING_K       = 0.028;   // gentle spring back to helix
+  const DAMPING        = 0.95;    // high damping → slow drift / linger
+  const REPULSE_K      = 0.13;    // repulsion impulse strength
+  const REPULSE_R_NDC  = 0.16;    // influence radius in NDC screen space
+  const REPULSE_Y_FACTOR = 0.35;  // attenuate vertical scatter to preserve helix silhouette
+  const INTERACTION_LINGER_S = 3.6; // seconds to keep spring loop running after last interaction
 
-  const warmColor = new THREE.Color(0xd4a853);
-  const coolColor = new THREE.Color(0xaaccff);
+  const helixPositions     = new Float32Array(HELIX_PARTICLES * 3);
+  const helixBasePositions = new Float32Array(HELIX_PARTICLES * 3); // rigid helix targets
+  const helixVelocities    = new Float32Array(HELIX_PARTICLES * 3); // per-particle drift
+  const helixRandY         = new Float32Array(HELIX_PARTICLES);      // pre-baked Y-drift bias
+  const helixColors        = new Float32Array(HELIX_PARTICLES * 3);
+  const helixSizes         = new Float32Array(HELIX_PARTICLES);
+
+  const warmColor  = new THREE.Color(0xd4a853);
+  const coolColor  = new THREE.Color(0xaaccff);
   const whiteColor = new THREE.Color(0xffffff);
 
   for (let i = 0; i < HELIX_PARTICLES; i++) {
@@ -96,37 +107,44 @@ export function initScene() {
     const angle = t * Math.PI * 2 * HELIX_TURNS + (strand * Math.PI);
     const y = (t - 0.5) * HELIX_HEIGHT;
 
-    /* slight organic noise on radius */
-    const rNoise = (Math.sin(t * 47.3) * 0.3 + Math.cos(t * 23.7) * 0.2);
+    /* tighter radius noise → rigid, solid-looking helix structure */
+    const rNoise = (Math.sin(t * 47.3) * 0.10 + Math.cos(t * 23.7) * 0.07);
     const r = HELIX_RADIUS + rNoise;
 
-    helixPositions[i * 3]     = Math.cos(angle) * r;
-    helixPositions[i * 3 + 1] = y;
-    helixPositions[i * 3 + 2] = Math.sin(angle) * r;
+    const bx = Math.cos(angle) * r;
+    const bz = Math.sin(angle) * r;
+
+    helixBasePositions[i * 3]     = bx;
+    helixBasePositions[i * 3 + 1] = y;
+    helixBasePositions[i * 3 + 2] = bz;
+    helixPositions[i * 3]         = bx;
+    helixPositions[i * 3 + 1]     = y;
+    helixPositions[i * 3 + 2]     = bz;
 
     /* color: warm→cool gradient along height */
-    const mixFactor = t;
-    const c = new THREE.Color().lerpColors(warmColor, coolColor, mixFactor);
-    /* sprinkle some pure white highlights */
-    if (Math.random() < 0.15) c.lerp(whiteColor, 0.7);
+    const c = new THREE.Color().lerpColors(warmColor, coolColor, t);
+    if (Math.random() < 0.14) c.lerp(whiteColor, 0.7);
     helixColors[i * 3]     = c.r;
     helixColors[i * 3 + 1] = c.g;
     helixColors[i * 3 + 2] = c.b;
 
-    helixSizes[i] = 0.04 + Math.random() * 0.08;
+    helixSizes[i] = 0.06 + Math.random() * 0.06;
+
+    /* pre-baked random Y-drift direction used during mouse repulsion */
+    helixRandY[i] = (Math.random() - 0.5) * 2.0;
   }
 
   const helixGeo = new THREE.BufferGeometry();
-  helixGeo.setAttribute('position', new THREE.BufferAttribute(helixPositions, 3));
-  helixGeo.setAttribute('color', new THREE.BufferAttribute(helixColors, 3));
-  helixGeo.setAttribute('size', new THREE.BufferAttribute(helixSizes, 1));
+  helixGeo.setAttribute('position', new THREE.BufferAttribute(helixPositions, 3).setUsage(THREE.DynamicDrawUsage));
+  helixGeo.setAttribute('color',    new THREE.BufferAttribute(helixColors, 3));
+  helixGeo.setAttribute('size',     new THREE.BufferAttribute(helixSizes, 1));
 
   const helixMat = new THREE.PointsMaterial({
-    size: 0.09,
+    size: 0.20,             // larger → near-solid coverage
     sizeAttenuation: true,
     vertexColors: true,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.92,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -135,13 +153,13 @@ export function initScene() {
 
   /* ── Helix connecting filaments (thin line strands) ───────────────── */
   for (let s = 0; s < HELIX_STRANDS; s++) {
-    const lineCount = useLiteScene ? 200 : 500;
+    const lineCount = useLiteScene ? 280 : 700;
     const linePos = new Float32Array(lineCount * 3);
     for (let j = 0; j < lineCount; j++) {
       const t = j / lineCount;
       const angle = t * Math.PI * 2 * HELIX_TURNS + (s * Math.PI);
       const y = (t - 0.5) * HELIX_HEIGHT;
-      const rNoise = (Math.sin(t * 47.3) * 0.3 + Math.cos(t * 23.7) * 0.2);
+      const rNoise = (Math.sin(t * 47.3) * 0.10 + Math.cos(t * 23.7) * 0.07);
       const r = HELIX_RADIUS + rNoise;
       linePos[j * 3]     = Math.cos(angle) * r;
       linePos[j * 3 + 1] = y;
@@ -152,7 +170,7 @@ export function initScene() {
     const lineMat = new THREE.LineBasicMaterial({
       color: s === 0 ? 0xd4a853 : 0xaaccff,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.10,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -160,13 +178,13 @@ export function initScene() {
   }
 
   /* ── Cross-rungs between helix strands ────────────────────────────── */
-  const RUNG_COUNT = useLiteScene ? 20 : 40;
+  const RUNG_COUNT = useLiteScene ? 28 : 55;
   for (let r = 0; r < RUNG_COUNT; r++) {
     const t = r / RUNG_COUNT;
     const angle0 = t * Math.PI * 2 * HELIX_TURNS;
     const angle1 = angle0 + Math.PI;
     const y = (t - 0.5) * HELIX_HEIGHT;
-    const rNoise = (Math.sin(t * 47.3) * 0.3 + Math.cos(t * 23.7) * 0.2);
+    const rNoise = (Math.sin(t * 47.3) * 0.10 + Math.cos(t * 23.7) * 0.07);
     const rad = HELIX_RADIUS + rNoise;
 
     const rungPos = new Float32Array(6);
@@ -182,7 +200,7 @@ export function initScene() {
     const rungMat = new THREE.LineBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.06,
+      opacity: 0.05,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -198,7 +216,7 @@ export function initScene() {
     const a = Math.random() * Math.PI * 2;
     const r = 6 + Math.random() * 50;
     dustPos[i * 3]     = Math.cos(a) * r;
-    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 120;
+    dustPos[i * 3 + 1] = (Math.random() - 0.5) * 130;
     dustPos[i * 3 + 2] = Math.sin(a) * r;
   }
   const dustGeo = new THREE.BufferGeometry();
@@ -240,7 +258,7 @@ export function initScene() {
 
     const angle = (i / shapeCount) * Math.PI * 2;
     const orbitRadius = 10 + Math.random() * 8;
-    const yPos = (Math.random() - 0.5) * 60;
+    const yPos = (Math.random() - 0.5) * 70;
 
     mesh.position.set(
       Math.cos(angle) * orbitRadius,
@@ -319,7 +337,7 @@ export function initScene() {
   });
 
   gsap.to(scrollAnim, {
-    camY: -HELIX_HEIGHT * 0.35,
+    camY: -HELIX_HEIGHT * 0.44,    // camera travels 44 % of helix height; combined with lookAt offset this keeps the helix visible throughout the full scroll
     ease: 'none',
     scrollTrigger: {
       trigger: document.documentElement,
@@ -329,7 +347,34 @@ export function initScene() {
     },
   });
 
-  /* ── Mouse parallax ──────────────────────────────────────────────── */
+  /* ── Mouse / touch tracking (NDC) for particle repulsion ─────────── */
+  const mouseNDC   = { x: 0, y: 0 };
+  let   mouseActive = false;
+
+  /* countdown that keeps the spring loop running after interaction ends */
+  let lastInteractionTime = -999; // seconds since clock start
+
+  document.addEventListener('mousemove', (e) => {
+    mouseNDC.x  =  (e.clientX / window.innerWidth)  * 2 - 1;
+    mouseNDC.y  = -(e.clientY / window.innerHeight) * 2 + 1;
+    mouseActive         = true;
+    lastInteractionTime = clock.getElapsedTime();
+  });
+
+  document.addEventListener('mouseleave', () => { mouseActive = false; });
+
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 0) {
+      mouseNDC.x  =  (e.touches[0].clientX / window.innerWidth)  * 2 - 1;
+      mouseNDC.y  = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+      mouseActive         = true;
+      lastInteractionTime = clock.getElapsedTime();
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => { mouseActive = false; });
+
+  /* ── Mouse parallax (camera tilt on desktop) ─────────────────────── */
   let targetCamX = 0;
   let targetCamY = 0;
 
@@ -353,6 +398,9 @@ export function initScene() {
     }
   });
 
+  /* ── Reusable scratch matrix for per-frame MVP projection ────────── */
+  const _mvp = new THREE.Matrix4();
+
   /* ── Animation loop ───────────────────────────────────────────────── */
   const clock = new THREE.Clock();
 
@@ -368,6 +416,74 @@ export function initScene() {
     camera.position.x += (targetCamX - camera.position.x) * 0.02;
     camera.position.y += (targetY - camera.position.y) * 0.02;
     camera.lookAt(0, camera.position.y * 0.8, 0);
+
+    /* ── Particle drift: spring-damper + mouse repulsion ──────────── */
+    /* Only run the expensive loop while there is active interaction or
+       the particles are still returning to their base positions.       */
+    const springActive = mouseActive ||
+      (elapsed - lastInteractionTime < INTERACTION_LINGER_S);
+
+    if (springActive) {
+      camera.updateMatrixWorld();
+      helixGroup.updateMatrixWorld(true);
+
+      /* MVP = projectionMatrix * viewMatrix * helixGroup worldMatrix */
+      _mvp.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+          .multiply(helixGroup.matrixWorld);
+      const m   = _mvp.elements;          // column-major Float32 elements
+      const pos = helixGeo.attributes.position.array;
+      const rr  = REPULSE_R_NDC * REPULSE_R_NDC;
+      const mx  = mouseNDC.x;
+      const my  = mouseNDC.y;
+
+      for (let i = 0; i < HELIX_PARTICLES; i++) {
+        const ix = i * 3;
+        const px = pos[ix];
+        const py = pos[ix + 1];
+        const pz = pos[ix + 2];
+
+        /* spring force toward rigid helix base position */
+        helixVelocities[ix]     += (helixBasePositions[ix]     - px) * SPRING_K;
+        helixVelocities[ix + 1] += (helixBasePositions[ix + 1] - py) * SPRING_K;
+        helixVelocities[ix + 2] += (helixBasePositions[ix + 2] - pz) * SPRING_K;
+
+        /* damping */
+        helixVelocities[ix]     *= DAMPING;
+        helixVelocities[ix + 1] *= DAMPING;
+        helixVelocities[ix + 2] *= DAMPING;
+
+        if (mouseActive) {
+          /* project particle local position → NDC (column-major MVP) */
+          const cx = m[0] * px + m[4] * py + m[8]  * pz + m[12];
+          const cy = m[1] * px + m[5] * py + m[9]  * pz + m[13];
+          const cw = m[3] * px + m[7] * py + m[11] * pz + m[15];
+
+          if (cw > 0.01) {
+            const ndcX = cx / cw;
+            const ndcY = cy / cw;
+            const dx   = ndcX - mx;
+            const dy   = ndcY - my;
+            const d2   = dx * dx + dy * dy;
+
+            if (d2 < rr) {
+              const strength = REPULSE_K * (1.0 - Math.sqrt(d2) / REPULSE_R_NDC);
+              /* push radially outward from helix axis (XZ) + random Y drift */
+              const axLen = Math.sqrt(px * px + pz * pz) || 1.0;
+              helixVelocities[ix]     += (px / axLen) * strength;
+              helixVelocities[ix + 1] += helixRandY[i] * strength * REPULSE_Y_FACTOR;
+              helixVelocities[ix + 2] += (pz / axLen) * strength;
+            }
+          }
+        }
+
+        /* integrate position */
+        pos[ix]     += helixVelocities[ix];
+        pos[ix + 1] += helixVelocities[ix + 1];
+        pos[ix + 2] += helixVelocities[ix + 2];
+      }
+
+      helixGeo.attributes.position.needsUpdate = true;
+    } /* end springActive */
 
     if (!useLiteScene) {
       /* dust cloud slow drift */
