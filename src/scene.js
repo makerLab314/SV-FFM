@@ -27,6 +27,8 @@ export function initScene() {
   renderer.setClearColor(0x000000, 1);
   renderer.toneMapping        = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.1;
+  /* enable per-material clipping planes (used for the helix bottom cutoff) */
+  renderer.localClippingEnabled = true;
 
   /* ── Scene & Camera ───────────────────────────────────────────────── */
   const scene = new THREE.Scene();
@@ -74,6 +76,8 @@ export function initScene() {
      PARTICLE HELIX – dense double-strand spiral spanning full page
      ══════════════════════════════════════════════════════════════════ */
   const helixGroup = new THREE.Group();
+  /* push helix further back in Z so it reads as a pure background element */
+  helixGroup.position.z = -6;
   scene.add(helixGroup);
 
   const HELIX_RADIUS     = 4.0;
@@ -83,12 +87,13 @@ export function initScene() {
   const HELIX_STRANDS    = 2;
 
   /* physics constants for particle drift interaction */
-  const SPRING_K       = 0.028;   // gentle spring back to helix
-  const DAMPING        = 0.95;    // high damping → slow drift / linger
-  const REPULSE_K      = 0.13;    // repulsion impulse strength
-  const REPULSE_R_NDC  = 0.16;    // influence radius in NDC screen space
-  const REPULSE_Y_FACTOR = 0.35;  // attenuate vertical scatter to preserve helix silhouette
-  const INTERACTION_LINGER_S = 3.6; // seconds to keep spring loop running after last interaction
+  const SPRING_K_MAX   = 0.028;   // full spring-back strength (when idle, no interaction)
+  const SPRING_K_MIN   = 0.002;   // near-zero spring during active touch (binding lost)
+  const DAMPING        = 0.94;    // damping – keeps drift slow and gentle
+  const REPULSE_K      = 0.10;    // repulsion impulse strength (gentle scatter)
+  const REPULSE_R_NDC  = 0.18;    // influence radius in NDC screen space
+  const REPULSE_Y_FACTOR = 0.30;  // attenuate vertical scatter to preserve helix silhouette
+  const INTERACTION_LINGER_S = 4.0; // seconds to keep spring loop running after last interaction
 
   const helixPositions     = new Float32Array(HELIX_PARTICLES * 3);
   const helixBasePositions = new Float32Array(HELIX_PARTICLES * 3); // rigid helix targets
@@ -128,7 +133,7 @@ export function initScene() {
     helixColors[i * 3 + 1] = c.g;
     helixColors[i * 3 + 2] = c.b;
 
-    helixSizes[i] = 0.06 + Math.random() * 0.06;
+    helixSizes[i] = 0.18 + Math.random() * 0.14;
 
     /* pre-baked random Y-drift direction used during mouse repulsion */
     helixRandY[i] = (Math.random() - 0.5) * 2.0;
@@ -139,73 +144,27 @@ export function initScene() {
   helixGeo.setAttribute('color',    new THREE.BufferAttribute(helixColors, 3));
   helixGeo.setAttribute('size',     new THREE.BufferAttribute(helixSizes, 1));
 
+  /* clipping plane: clips helix particles where y < -10 (world-space).
+     Plane equation: normal·point + constant = 0 → y + 10 = 0, so cutoff is at Y = -10.
+     In the initial viewport (camera at Y=0, FOV 58°, z=22) the bottom edge is ~Y=-12,
+     so this keeps the helix visible in the hero section and hides it as the user scrolls. */
+  const helixClipPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 10);
+
   const helixMat = new THREE.PointsMaterial({
-    size: 0.20,             // larger → near-solid coverage
+    size: 0.38,             // larger → clearly visible dense particles
     sizeAttenuation: true,
     vertexColors: true,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.88,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
+    clippingPlanes: [helixClipPlane],
   });
   const helixPoints = new THREE.Points(helixGeo, helixMat);
   helixGroup.add(helixPoints);
 
-  /* ── Helix connecting filaments (thin line strands) ───────────────── */
-  for (let s = 0; s < HELIX_STRANDS; s++) {
-    const lineCount = useLiteScene ? 280 : 700;
-    const linePos = new Float32Array(lineCount * 3);
-    for (let j = 0; j < lineCount; j++) {
-      const t = j / lineCount;
-      const angle = t * Math.PI * 2 * HELIX_TURNS + (s * Math.PI);
-      const y = (t - 0.5) * HELIX_HEIGHT;
-      const rNoise = (Math.sin(t * 47.3) * 0.10 + Math.cos(t * 23.7) * 0.07);
-      const r = HELIX_RADIUS + rNoise;
-      linePos[j * 3]     = Math.cos(angle) * r;
-      linePos[j * 3 + 1] = y;
-      linePos[j * 3 + 2] = Math.sin(angle) * r;
-    }
-    const lineGeo = new THREE.BufferGeometry();
-    lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
-    const lineMat = new THREE.LineBasicMaterial({
-      color: s === 0 ? 0xd4a853 : 0xaaccff,
-      transparent: true,
-      opacity: 0.10,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    helixGroup.add(new THREE.Line(lineGeo, lineMat));
-  }
-
-  /* ── Cross-rungs between helix strands ────────────────────────────── */
-  const RUNG_COUNT = useLiteScene ? 28 : 55;
-  for (let r = 0; r < RUNG_COUNT; r++) {
-    const t = r / RUNG_COUNT;
-    const angle0 = t * Math.PI * 2 * HELIX_TURNS;
-    const angle1 = angle0 + Math.PI;
-    const y = (t - 0.5) * HELIX_HEIGHT;
-    const rNoise = (Math.sin(t * 47.3) * 0.10 + Math.cos(t * 23.7) * 0.07);
-    const rad = HELIX_RADIUS + rNoise;
-
-    const rungPos = new Float32Array(6);
-    rungPos[0] = Math.cos(angle0) * rad;
-    rungPos[1] = y;
-    rungPos[2] = Math.sin(angle0) * rad;
-    rungPos[3] = Math.cos(angle1) * rad;
-    rungPos[4] = y;
-    rungPos[5] = Math.sin(angle1) * rad;
-
-    const rungGeo = new THREE.BufferGeometry();
-    rungGeo.setAttribute('position', new THREE.BufferAttribute(rungPos, 3));
-    const rungMat = new THREE.LineBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.05,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    helixGroup.add(new THREE.Line(rungGeo, rungMat));
-  }
+  /* ── Solid line strands and cross-rungs removed: the helix is now
+     purely a dense particle cloud – no wire filaments           */
 
   /* ══════════════════════════════════════════════════════════════════
      AMBIENT PARTICLE CLOUD – depth atmosphere
@@ -436,6 +395,14 @@ export function initScene() {
       const mx  = mouseNDC.x;
       const my  = mouseNDC.y;
 
+      /* dynamic spring constant – simulates binding force loss during touch:
+         - while mouse/touch is active: spring drops to SPRING_K_MIN (almost no pull back)
+         - after interaction: spring strength linearly recovers over INTERACTION_LINGER_S  */
+      const t_since = elapsed - lastInteractionTime;
+      const springStrength = mouseActive
+        ? SPRING_K_MIN
+        : SPRING_K_MIN + (SPRING_K_MAX - SPRING_K_MIN) * Math.min(t_since / INTERACTION_LINGER_S, 1.0);
+
       for (let i = 0; i < HELIX_PARTICLES; i++) {
         const ix = i * 3;
         const px = pos[ix];
@@ -443,9 +410,9 @@ export function initScene() {
         const pz = pos[ix + 2];
 
         /* spring force toward rigid helix base position */
-        helixVelocities[ix]     += (helixBasePositions[ix]     - px) * SPRING_K;
-        helixVelocities[ix + 1] += (helixBasePositions[ix + 1] - py) * SPRING_K;
-        helixVelocities[ix + 2] += (helixBasePositions[ix + 2] - pz) * SPRING_K;
+        helixVelocities[ix]     += (helixBasePositions[ix]     - px) * springStrength;
+        helixVelocities[ix + 1] += (helixBasePositions[ix + 1] - py) * springStrength;
+        helixVelocities[ix + 2] += (helixBasePositions[ix + 2] - pz) * springStrength;
 
         /* damping */
         helixVelocities[ix]     *= DAMPING;
