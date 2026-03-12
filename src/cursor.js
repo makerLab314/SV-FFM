@@ -1,5 +1,5 @@
 /* ========================================
-   Custom Cursor
+   Custom Cursor  –  snappy + dev-grid aura
    ======================================== */
 
 export function initCursor() {
@@ -29,10 +29,10 @@ export function initCursor() {
     cursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
   });
 
-  // Smooth follower
+  // Snappy follower – higher lerp factor removes the sluggish lag
   function animateFollower() {
-    followerX += (mouseX - followerX) * 0.12;
-    followerY += (mouseY - followerY) * 0.12;
+    followerX += (mouseX - followerX) * 0.28;
+    followerY += (mouseY - followerY) * 0.28;
     follower.style.transform = `translate3d(${followerX}px, ${followerY}px, 0) translate(-50%, -50%)`;
     requestAnimationFrame(animateFollower);
   }

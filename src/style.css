@@ -100,8 +100,25 @@ a {
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
-  transition: width 0.35s ease, height 0.35s ease, border-color 0.3s;
+  transition: width 0.25s ease, height 0.25s ease, border-color 0.3s;
   mix-blend-mode: difference;
+  /* Dev-grid overlay inside the follower circle */
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.06) 0px,
+      rgba(255,255,255,0.06) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.06) 0px,
+      rgba(255,255,255,0.06) 1px,
+      transparent 1px,
+      transparent 5px
+    );
+  background-size: 5px 5px;
 }
 
 .cursor.hover {
