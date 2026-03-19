@@ -8,90 +8,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-function initHelixOverlay() {
-  const sections = Array.from(document.querySelectorAll('section.section'));
-  if (!sections.length) return;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'helix-overlay';
-
-  const spine = document.createElement('div');
-  spine.className = 'helix-overlay__spine';
-  const spineFill = document.createElement('div');
-  spineFill.className = 'helix-overlay__spine-fill';
-  spine.appendChild(spineFill);
-
-  const nodesWrap = document.createElement('div');
-  nodesWrap.className = 'helix-overlay__nodes';
-
-  overlay.append(spine, nodesWrap);
-  document.body.appendChild(overlay);
-
-  const nodes = sections.map((section, idx) => {
-    const titleEl =
-      section.querySelector('.section-title') ||
-      section.querySelector('h1') ||
-      section.querySelector('h2');
-    const summaryEl =
-      section.querySelector('.section-lead') ||
-      section.querySelector('p');
-
-    const title = titleEl?.textContent?.trim() || section.id || `Abschnitt ${idx + 1}`;
-    const summaryRaw = summaryEl?.textContent?.trim() || '';
-    const summary =
-      summaryRaw.length > 160 ? `${summaryRaw.slice(0, 157)}…` : summaryRaw;
-
-    const node = document.createElement('button');
-    node.type = 'button';
-    node.className = 'helix-node';
-    node.dataset.target = section.id;
-    node.innerHTML = `
-      <span class="helix-node__index">${String(idx + 1).padStart(2, '0')}</span>
-      <div class="helix-node__copy">
-        <span class="helix-node__title">${title}</span>
-        ${summary ? `<span class="helix-node__desc">${summary}</span>` : ''}
-      </div>
-    `;
-    node.addEventListener('click', (e) => {
-      e.preventDefault();
-      section.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    nodesWrap.appendChild(node);
-    return { section, node };
-  });
-
-  const setActive = (id) => {
-    nodes.forEach(({ section, node }) => {
-      const isActive = id === section.id;
-      node.classList.toggle('is-active', isActive);
-      section.dataset.helixActive = isActive ? 'true' : 'false';
-    });
-  };
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && entry.target.id) {
-          setActive(entry.target.id);
-        }
-      });
-    },
-    { rootMargin: '-38% 0px -38% 0px', threshold: 0.2 }
-  );
-
-  nodes.forEach(({ section }) => observer.observe(section));
-
-  const updateSpineFill = () => {
-    const denom = document.documentElement.scrollHeight - window.innerHeight || 1;
-    const progress = Math.min(1, Math.max(0, window.scrollY / denom));
-    spineFill.style.height = `${progress * 100}%`;
-  };
-
-  updateSpineFill();
-  window.addEventListener('scroll', updateSpineFill, { passive: true });
-}
-
 export function initScrollAnimations() {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
@@ -189,8 +105,6 @@ export function initScrollAnimations() {
       1.4
     );
   }
-
-  initHelixOverlay();
 
   // --- Rolodex / page-fold effect ─────────────────────────────────────
   const FOLD_EXIT_ROT   = 18;

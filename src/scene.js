@@ -81,21 +81,19 @@ export function initScene() {
   helixGroup.renderOrder = -1;
   scene.add(helixGroup);
 
-  const pageSpan     = Math.max(1, document.documentElement.scrollHeight / window.innerHeight);
-  const HELIX_RADIUS = 4.0;
-  const HELIX_HEIGHT = Math.min(220, 90 + pageSpan * 18); // scale with page height so the spiral blankets the full scroll
-  const HELIX_TURNS  = Math.max(11, Math.round(pageSpan * 2.4)); // denser twists for long pages
-  const BASE_PARTICLES = useLiteScene ? 5200 : 12000;
-  const HELIX_PARTICLES = Math.min(useLiteScene ? 8000 : 18000, Math.round(BASE_PARTICLES * pageSpan));
+  const HELIX_RADIUS     = 4.0;
+  const HELIX_HEIGHT     = 110;       // taller to cover full scroll
+  const HELIX_TURNS      = 11;        // more turns → denser packing
+  const HELIX_PARTICLES  = useLiteScene ? 6000 : 14000;
   const HELIX_STRANDS    = 2;
 
   /* physics constants for particle drift interaction */
-  const SPRING_K_MAX   = 0.030;   // full spring-back strength (when idle, no interaction)
-  const SPRING_K_MIN   = 0.004;   // near-zero spring during active touch (binding lost)
-  const DAMPING        = 0.962;   // damping – keeps drift slow and gentle
-  const REPULSE_K      = 0.082;   // repulsion impulse strength (gentle scatter)
-  const REPULSE_R_NDC  = 0.26;    // influence radius in NDC screen space
-  const REPULSE_Y_FACTOR = 0.24;  // attenuate vertical scatter to preserve helix silhouette
+  const SPRING_K_MAX   = 0.022;   // full spring-back strength (when idle, no interaction)
+  const SPRING_K_MIN   = 0.003;   // near-zero spring during active touch (binding lost)
+  const DAMPING        = 0.96;    // damping – keeps drift slow and gentle
+  const REPULSE_K      = 0.06;    // repulsion impulse strength (gentle scatter)
+  const REPULSE_R_NDC  = 0.22;    // influence radius in NDC screen space
+  const REPULSE_Y_FACTOR = 0.25;  // attenuate vertical scatter to preserve helix silhouette
   const INTERACTION_LINGER_S = 5.0; // seconds to keep spring loop running after last interaction
 
   const helixPositions     = new Float32Array(HELIX_PARTICLES * 3);
@@ -147,36 +145,18 @@ export function initScene() {
   helixGeo.setAttribute('color',    new THREE.BufferAttribute(helixColors, 3));
   helixGeo.setAttribute('size',     new THREE.BufferAttribute(helixSizes, 1));
 
-  const helixClipPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), HELIX_HEIGHT); // effectively unclipped so the helix spans the full scroll
-
-  const particleTexture = (() => {
-    const size = 64;
-    const c = document.createElement('canvas');
-    c.width = c.height = size;
-    const ctx = c.getContext('2d');
-    const g = ctx.createRadialGradient(size / 2, size / 2, size * 0.15, size / 2, size / 2, size * 0.5);
-    g.addColorStop(0, 'rgba(255,255,255,0.95)');
-    g.addColorStop(0.55, 'rgba(255,255,255,0.65)');
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size * 0.5, 0, Math.PI * 2);
-    ctx.fill();
-    const tex = new THREE.Texture(c);
-    tex.needsUpdate = true;
-    tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-    return tex;
-  })();
+  /* clipping plane: clips helix particles where y < -10 (world-space).
+     Plane equation: normal·point + constant = 0 → y + 10 = 0, so cutoff is at Y = -10.
+     In the initial viewport (camera at Y=0, FOV 58°, z=22) the bottom edge is ~Y=-12,
+     so this keeps the helix visible in the hero section and hides it as the user scrolls. */
+  const helixClipPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 10);
 
   const helixMat = new THREE.PointsMaterial({
-    size: 0.82,              // larger → clearly visible dense particles
+    size: 0.7,              // larger → clearly visible dense particles
     sizeAttenuation: true,
-    map: particleTexture,
-    alphaMap: particleTexture,
-    alphaTest: 0.15,
     vertexColors: true,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.88,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     clippingPlanes: [helixClipPlane],
@@ -318,7 +298,7 @@ export function initScene() {
   });
 
   gsap.to(scrollAnim, {
-    camY: -HELIX_HEIGHT * 0.62,    // travel deeper so the helix blankets the full document height
+    camY: -HELIX_HEIGHT * 0.44,    // camera travels 44 % of helix height; combined with lookAt offset this keeps the helix visible throughout the full scroll
     ease: 'none',
     scrollTrigger: {
       trigger: document.documentElement,
