@@ -58,7 +58,7 @@ export function initScene() {
   }
 
   /* ── Lights ───────────────────────────────────────────────────────── */
-  scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.15));
 
   const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
   keyLight.position.set(8, 14, 14);
@@ -77,8 +77,8 @@ export function initScene() {
      ══════════════════════════════════════════════════════════════════ */
   const helixGroup = new THREE.Group();
   /* push helix far back in Z so it reads as a pure background element */
-  helixGroup.position.z = -14;
-  helixGroup.renderOrder = -1;
+  helixGroup.position.z = 1;
+  helixGroup.renderOrder = 5;
   scene.add(helixGroup);
 
   const HELIX_RADIUS     = 4.0;
