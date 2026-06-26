@@ -1,27 +1,27 @@
-import './style.css';
-import { initCursor } from './cursor.js';
-import { initScrollAnimations } from './scroll.js';
-
 /* ========================================
    Main entry – SV Website
+   Helles Papier-/Archiv-Design
    ======================================== */
 
-document.addEventListener('DOMContentLoaded', () => {
-  initCursor();
-  initScrollAnimations();
+import './style.css';
 
-  const loadThreeExperience = async () => {
-    const [{ initLogo3D }, { initScene }] = await Promise.all([
-      import('./logo3d.js'),
-      import('./scene.js'),
-    ]);
-    initLogo3D();
-    initScene();
-  };
+/* Self-hosted fonts (DSGVO-konform – kein Google-CDN) */
+import '@fontsource-variable/inter';
+import '@fontsource/courier-prime/400.css';
+import '@fontsource/courier-prime/700.css';
 
-  if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(loadThreeExperience, { timeout: 1200 });
-  } else {
-    window.setTimeout(loadThreeExperience, 1200);
-  }
-});
+import { initInteractions } from './scroll.js';
+
+/* Progressive Enhancement: .no-js → .js-ready (synchron in index.html gesetzt) */
+document.documentElement.classList.remove('no-js');
+document.documentElement.classList.add('js-ready');
+
+const start = () => {
+  initInteractions();
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', start, { once: true });
+} else {
+  start();
+}

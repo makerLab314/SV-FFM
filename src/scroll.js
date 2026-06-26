@@ -1,476 +1,154 @@
 /* ========================================
-   Scroll Animations (GSAP + ScrollTrigger)
-   Skeuomorphic 3D rolodex fold/unroll + parallax
+   Interaktionen – Scroll-Reveal, Scroll-Spy,
+   Header, Mobile-Nav, Pointer-Glow, Kontakt
+   (Vanilla JS – keine externen Animationslibs)
    ======================================== */
 
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-gsap.registerPlugin(ScrollTrigger);
+/* ── Scroll-Reveal: blendet .reveal beim Eintreten ein ───── */
+function setupReveal() {
+  const items = document.querySelectorAll('.reveal');
+  if (!items.length) return;
 
-function initHelixOverlay() {
-  const sections = Array.from(document.querySelectorAll('section.section'));
-  if (!sections.length) return;
+  if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+    items.forEach((el) => el.classList.add('is-visible'));
+    return;
+  }
 
-  const overlay = document.createElement('div');
-  overlay.id = 'helix-overlay';
+  const observer = new IntersectionObserver(
+    (entries, obs) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    },
+    { rootMargin: '0px 0px -10% 0px', threshold: 0.12 }
+  );
 
-  const spine = document.createElement('div');
-  spine.className = 'helix-overlay__spine';
-  const spineFill = document.createElement('div');
-  spineFill.className = 'helix-overlay__spine-fill';
-  spine.appendChild(spineFill);
+  items.forEach((el) => observer.observe(el));
+}
 
-  const nodesWrap = document.createElement('div');
-  nodesWrap.className = 'helix-overlay__nodes';
+/* ── Scroll-Spy: aktiven Navigationspunkt markieren ─────── */
+function setupScrollSpy() {
+  const sections = Array.from(document.querySelectorAll('main section[id]'));
+  const links = Array.from(document.querySelectorAll('.nav-links a'));
+  if (!sections.length || !links.length) return;
 
-  overlay.append(spine, nodesWrap);
-  document.body.appendChild(overlay);
-
-  const nodes = sections.map((section, idx) => {
-    const titleEl =
-      section.querySelector('.section-title') ||
-      section.querySelector('h1') ||
-      section.querySelector('h2');
-    const summaryEl =
-      section.querySelector('.section-lead') ||
-      section.querySelector('p');
-
-    const title = titleEl?.textContent?.trim() || section.id || `Abschnitt ${idx + 1}`;
-    const summaryRaw = summaryEl?.textContent?.trim() || '';
-    const summary =
-      summaryRaw.length > 160 ? `${summaryRaw.slice(0, 157)}…` : summaryRaw;
-
-    const node = document.createElement('button');
-    node.type = 'button';
-    node.className = 'helix-node';
-    node.dataset.target = section.id;
-    node.innerHTML = `
-      <span class="helix-node__index">${String(idx + 1).padStart(2, '0')}</span>
-      <div class="helix-node__copy">
-        <span class="helix-node__title">${title}</span>
-        ${summary ? `<span class="helix-node__desc">${summary}</span>` : ''}
-      </div>
-    `;
-    node.addEventListener('click', (e) => {
-      e.preventDefault();
-      section.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    nodesWrap.appendChild(node);
-    return { section, node };
-  });
-
-  const setActive = (id) => {
-    nodes.forEach(({ section, node }) => {
-      const isActive = id === section.id;
-      node.classList.toggle('is-active', isActive);
-      section.dataset.helixActive = isActive ? 'true' : 'false';
-    });
+  const setCurrent = (id) => {
+    links.forEach((link) =>
+      link.classList.toggle('is-current', link.getAttribute('href') === `#${id}`)
+    );
   };
 
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
-        if (entry.isIntersecting && entry.target.id) {
-          setActive(entry.target.id);
-        }
+        if (entry.isIntersecting && entry.target.id) setCurrent(entry.target.id);
       });
     },
-    { rootMargin: '-38% 0px -38% 0px', threshold: 0.2 }
+    { rootMargin: '-45% 0px -45% 0px', threshold: 0 }
   );
 
-  nodes.forEach(({ section }) => observer.observe(section));
-
-  const updateSpineFill = () => {
-    const denom = document.documentElement.scrollHeight - window.innerHeight || 1;
-    const progress = Math.min(1, Math.max(0, window.scrollY / denom));
-    spineFill.style.height = `${progress * 100}%`;
-  };
-
-  updateSpineFill();
-  window.addEventListener('scroll', updateSpineFill, { passive: true });
+  sections.forEach((section) => observer.observe(section));
 }
 
-export function initScrollAnimations() {
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  const useLiteScrollEffects = prefersReducedMotion || isMobile;
+/* ── Header: beim Runterscrollen ausblenden ─────────────── */
+function setupHeader() {
+  const header = document.getElementById('site-header');
+  if (!header) return;
 
-  // --- Hero entrance ---
-  const heroLines = document.querySelectorAll('.hero-title .line');
-  const heroSub = document.querySelector('.hero-subtitle');
-  const heroTag = document.querySelector('.hero-tagline');
-  const scrollInd = document.querySelector('.scroll-indicator');
+  let lastY = window.scrollY;
+  let ticking = false;
 
-  const typeLine = (line, text, speed = 44) => {
-    let index = 0;
-    line.classList.add('is-typing');
-    line.textContent = '';
-
-    const tick = () => {
-      index += 1;
-      line.textContent = text.slice(0, index);
-      if (index < text.length) {
-        window.setTimeout(tick, speed);
-      } else {
-        line.classList.remove('is-typing');
-      }
-    };
-
-    tick();
+  const update = () => {
+    const y = window.scrollY;
+    if (y > lastY && y > 160) header.classList.add('hide');
+    else header.classList.remove('hide');
+    lastY = y;
+    ticking = false;
   };
 
-  // Set initial state BEFORE creating the timeline
-  heroLines.forEach((line) => {
-    if (!prefersReducedMotion) {
-      line.dataset.fullText = line.textContent.trim();
-      line.style.setProperty('--typewriter-chars', `${line.dataset.fullText.length}`);
-      line.textContent = '';
-    }
-    gsap.set(line, { rotateX: -45, transformPerspective: 800 });
-  });
-
-  const heroTl = gsap.timeline({ delay: 0.3 });
-
-  heroLines.forEach((line, i) => {
-    heroTl.to(
-      line,
-      {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
-        duration: 1.1,
-        ease: 'power4.out',
-        onStart: () => {
-          if (!prefersReducedMotion && line.dataset.fullText) {
-            typeLine(line, line.dataset.fullText, 36 + i * 8);
-          }
-        },
-      },
-      i * 0.25
-    );
-  });
-
-  if (heroSub) {
-    heroTl.to(
-      heroSub,
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.9,
-        ease: 'power2.out',
-      },
-      0.7
-    );
-  }
-
-  if (heroTag) {
-    heroTl.to(
-      heroTag,
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        ease: 'power2.out',
-      },
-      1.0
-    );
-  }
-
-  if (scrollInd) {
-    heroTl.to(
-      scrollInd,
-      {
-        opacity: 1,
-        duration: 0.6,
-        ease: 'power2.out',
-      },
-      1.4
-    );
-  }
-
-  initHelixOverlay();
-
-  // --- Rolodex / page-fold effect ─────────────────────────────────────
-  const FOLD_EXIT_ROT   = 18;
-  const FOLD_DEPTH_PX   = -180;
-  const FOLD_FADE       = 0.55;
-
-  if (!useLiteScrollEffects) {
-    gsap.utils.toArray('.section').forEach((section) => {
-      ScrollTrigger.create({
-        trigger: section,
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 1.2,
-        onUpdate: (self) => {
-          const p = self.progress;
-          const eased = p * p;
-          const rotX    = eased * FOLD_EXIT_ROT;
-          const transZ  = eased * FOLD_DEPTH_PX;
-          const opacity = 1 - p * FOLD_FADE;
-          section.style.transform = `rotateX(${rotX}deg) translateZ(${transZ}px)`;
-          section.style.opacity   = opacity;
-        },
-        onLeaveBack: () => {
-          section.style.transform = 'rotateX(0deg) translateZ(0px)';
-          section.style.opacity   = 1;
-        },
-      });
-
-      ScrollTrigger.create({
-        trigger: section,
-        start: 'top 110%',
-        end: 'top top',
-        scrub: 1,
-        onUpdate: (self) => {
-          if (self.direction === 1) {
-            const entryProgress = 1 - self.progress;
-            const eased = entryProgress * entryProgress;
-            const rotX  = -eased * 12;
-            section.style.transformOrigin = 'center bottom';
-            section.style.transform = `rotateX(${rotX}deg) translateZ(${-eased * 60}px)`;
-          }
-        },
-        onEnterBack: () => {
-          section.style.transformOrigin = 'center top';
-        },
-      });
-    });
-  }
-
-  // --- Deep parallax on section content ─────────────────────────────
-  if (!useLiteScrollEffects) {
-    gsap.utils.toArray('.section-inner').forEach((inner) => {
-      gsap.to(inner, {
-        scrollTrigger: {
-          trigger: inner,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1.5,
-        },
-        y: -60,
-        ease: 'none',
-      });
-    });
-  }
-
-  // ── Hero-logo parallax (slower than content) ─────────────────────────
-  const heroLogoBg = document.querySelector('.hero-logo-bg');
-  if (heroLogoBg) {
-    gsap.to(heroLogoBg, {
-      scrollTrigger: {
-        trigger: '#hero',
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 2,
-      },
-      y: -120,
-      scale: 1.15,
-      ease: 'none',
-    });
-  }
-
-  // --- About cards — rolodex flip-in from behind ─────────────────────
-  gsap.utils.toArray('.about-card').forEach((card, i) => {
-    gsap.set(card, {
-      rotateX: 55,
-      transformPerspective: 900,
-      transformOrigin: 'center bottom',
-      opacity: 0,
-      y: 60,
-    });
-
-    gsap.to(card, {
-      scrollTrigger: {
-        trigger: card,
-        start: 'top 88%',
-        toggleActions: 'play none none none',
-      },
-      rotateX: 0,
-      opacity: 1,
-      y: 0,
-      duration: 0.9,
-      delay: i * 0.18,
-      ease: 'back.out(1.2)',
-    });
-  });
-
-  // --- Struktur cards — scale up with rotation ─────────────────────
-  gsap.utils.toArray('.struktur-card').forEach((card, i) => {
-    gsap.set(card, {
-      rotateY: -45,
-      transformPerspective: 700,
-      opacity: 0,
-      scale: 0.85,
-    });
-
-    gsap.to(card, {
-      scrollTrigger: {
-        trigger: card,
-        start: 'top 88%',
-        toggleActions: 'play none none none',
-      },
-      rotateY: 0,
-      opacity: 1,
-      scale: 1,
-      duration: 0.75,
-      delay: i * 0.1,
-      ease: 'power3.out',
-    });
-  });
-
-  // --- Project items — slide from the left with a 3-D lean ─────────
-  gsap.utils.toArray('.project-item').forEach((item, i) => {
-    gsap.set(item, {
-      rotateY: -12,
-      transformPerspective: 700,
-      opacity: 0,
-      x: -60,
-    });
-
-    gsap.to(item, {
-      scrollTrigger: {
-        trigger: item,
-        start: 'top 88%',
-        toggleActions: 'play none none none',
-      },
-      rotateY: 0,
-      opacity: 1,
-      x: 0,
-      duration: 0.75,
-      delay: i * 0.12,
-      ease: 'power2.out',
-    });
-  });
-
-  // --- Vernetzung cards — flip in ─────────────────────────────────
-  gsap.utils.toArray('.vernetzung-card').forEach((card, i) => {
-    gsap.set(card, {
-      rotateX: 35,
-      transformPerspective: 900,
-      transformOrigin: 'center bottom',
-      opacity: 0,
-      y: 50,
-    });
-
-    gsap.to(card, {
-      scrollTrigger: {
-        trigger: card,
-        start: 'top 88%',
-        toggleActions: 'play none none none',
-      },
-      rotateX: 0,
-      opacity: 1,
-      y: 0,
-      duration: 0.85,
-      delay: i * 0.2,
-      ease: 'back.out(1.3)',
-    });
-  });
-
-  // --- Archiv section — zoom entrance ─────────────────────────────
-  const archivContent = document.querySelector('.archiv-content');
-  if (archivContent) {
-    gsap.set(archivContent, {
-      scale: 0.88,
-      rotateX: 15,
-      transformPerspective: 800,
-      opacity: 0,
-      y: 40,
-    });
-
-    gsap.to(archivContent, {
-      scrollTrigger: {
-        trigger: archivContent,
-        start: 'top 82%',
-        toggleActions: 'play none none none',
-      },
-      scale: 1,
-      rotateX: 0,
-      opacity: 1,
-      y: 0,
-      duration: 0.9,
-      ease: 'back.out(1.4)',
-    });
-  }
-
-  // --- Contact section — zoom-punch entrance ─────────────────────────
-  const contactContent = document.querySelector('.contact-content');
-  if (contactContent) {
-    gsap.set(contactContent, {
-      scale: 0.85,
-      rotateX: 20,
-      transformPerspective: 800,
-      opacity: 0,
-      y: 40,
-    });
-
-    gsap.to(contactContent, {
-      scrollTrigger: {
-        trigger: contactContent,
-        start: 'top 82%',
-        toggleActions: 'play none none none',
-      },
-      scale: 1,
-      rotateX: 0,
-      opacity: 1,
-      y: 0,
-      duration: 0.9,
-      ease: 'back.out(1.5)',
-    });
-  }
-
-  // --- Section titles – slide in with slight rotateX ─────────────────
-  gsap.utils.toArray('.section-title').forEach((title) => {
-    gsap.set(title, { rotateX: -25, transformPerspective: 600, opacity: 0, y: 30 });
-
-    gsap.to(title, {
-      scrollTrigger: {
-        trigger: title,
-        start: 'top 90%',
-        toggleActions: 'play none none none',
-      },
-      rotateX: 0,
-      opacity: 1,
-      y: 0,
-      duration: 0.8,
-      ease: 'power3.out',
-    });
-  });
-
-  // --- Section leads – fade in ─────────────────────────────────────
-  gsap.utils.toArray('.section-lead').forEach((lead) => {
-    gsap.set(lead, { opacity: 0, y: 20 });
-
-    gsap.to(lead, {
-      scrollTrigger: {
-        trigger: lead,
-        start: 'top 90%',
-        toggleActions: 'play none none none',
-      },
-      opacity: 1,
-      y: 0,
-      duration: 0.7,
-      ease: 'power2.out',
-    });
-  });
-
-  // --- Navbar hide/show on scroll ─────────────────────────────────────
-  let lastScroll = 0;
-  const navbar = document.getElementById('navbar');
-
-  ScrollTrigger.create({
-    onUpdate: (self) => {
-      if (!navbar) return;
-      const currentScroll = self.scroll();
-      if (currentScroll > lastScroll && currentScroll > 100) {
-        navbar.style.transform = 'translateY(-100%)';
-      } else {
-        navbar.style.transform = 'translateY(0)';
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        window.requestAnimationFrame(update);
+        ticking = true;
       }
-      lastScroll = currentScroll;
     },
+    { passive: true }
+  );
+}
+
+/* ── Mobile-Navigation ──────────────────────────────────── */
+function setupMobileNav() {
+  const toggle = document.getElementById('nav-toggle');
+  const links = document.getElementById('nav-links');
+  if (!toggle || !links) return;
+
+  const close = () => {
+    links.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Menü öffnen');
+  };
+
+  toggle.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open ? 'Menü schließen' : 'Menü öffnen');
   });
+
+  links.addEventListener('click', (e) => {
+    if (e.target.closest('a')) close();
+  });
+}
+
+/* ── Kontakt-Adresse per JS zusammensetzen (Spam-Schutz) ── */
+function setupContactEmail() {
+  const btn = document.querySelector('.contact-mail[data-user][data-domain]');
+  if (!btn) return;
+  const address = `${btn.dataset.user}@${btn.dataset.domain}`;
+  btn.href = `mailto:${address}`;
+  const label = btn.querySelector('.contact-email');
+  if (label) label.textContent = address;
+}
+
+/* ── Pointer-Glow folgt der Maus (nur feine Zeiger) ─────── */
+function setupPointerGlow() {
+  const glow = document.getElementById('pointer-glow');
+  if (!glow || prefersReducedMotion) return;
+  if (!window.matchMedia('(pointer: fine)').matches) return;
+
+  let x = window.innerWidth / 2;
+  let y = window.innerHeight / 2;
+  let ticking = false;
+
+  const render = () => {
+    glow.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    ticking = false;
+  };
+
+  window.addEventListener('mousemove', (e) => {
+    x = e.clientX;
+    y = e.clientY;
+    glow.classList.add('active');
+    if (!ticking) {
+      window.requestAnimationFrame(render);
+      ticking = true;
+    }
+  });
+
+  document.addEventListener('mouseleave', () => glow.classList.remove('active'));
+}
+
+export function initInteractions() {
+  setupReveal();
+  setupScrollSpy();
+  setupHeader();
+  setupMobileNav();
+  setupContactEmail();
+  setupPointerGlow();
 }
