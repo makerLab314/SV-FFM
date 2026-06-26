@@ -12,16 +12,22 @@
     "type": "git",
     "url": "git+https://github.com/makerLab314/SV-FFM.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "schülervertretung",
+    "waldorfschule",
+    "frankfurt",
+    "vite",
+    "three.js"
+  ],
+  "author": "Schülervertretung – Freie Waldorfschule Frankfurt am Main",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/makerLab314/SV-FFM/issues"
   },
   "homepage": "https://makerLab314.github.io/SV-FFM/",
   "dependencies": {
-    "gsap": "^3.14.2",
-    "three": "^0.183.2"
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource/courier-prime": "^5.2.8"
   },
   "devDependencies": {
     "vite": "^7.3.1"
